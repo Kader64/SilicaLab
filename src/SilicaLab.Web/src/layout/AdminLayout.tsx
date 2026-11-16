@@ -33,7 +33,7 @@ export default function AdminLayout() {
 
       <aside className="border-b border-line bg-white p-4 lg:sticky lg:top-0 lg:flex lg:h-screen lg:w-64 lg:shrink-0 lg:flex-col lg:overflow-y-auto lg:border-b-0 lg:border-r lg:p-5">
         <div className="flex items-center justify-between lg:mb-8">
-          <div className="flex items-center gap-3">
+          <div className="flex justify-between w-full items-center">
             <Logo to="/admin" />
             <span className="eyebrow">Admin</span>
           </div>
