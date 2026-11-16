@@ -1,11 +1,41 @@
-import { Pencil, Plus } from "lucide-react";
+import { BookOpen, Pencil, Plus } from "lucide-react";
 import { Link } from "react-router-dom";
-import PageHeader from "../../components/PageHeader";
-import StatusBadge from "../../components/StatusBadge";
-import { courses } from "../../examples/exampledata";
+import DataTable, { type Column } from "../../components/ui/DataTable";
+import EmptyState from "../../components/ui/EmptyState";
+import PageHeader from "../../components/ui/PageHeader";
+import StatusBadge from "../../components/ui/StatusBadge";
+import { courses } from "../../mocks/data";
+import type { Course } from "../../types";
+
+const columns: Column<Course>[] = [
+  {
+    header: "Course",
+    cell: (c) => (
+      <>
+        <p className="font-semibold text-ink">{c.title}</p>
+        <p className="text-xs text-muted">{c.category}</p>
+      </>
+    ),
+  },
+  { header: "Status", cell: (c) => <StatusBadge status={c.status} /> },
+  { header: "Lessons", cell: (c) => c.lessons },
+  { header: "Students", cell: (c) => c.students },
+  {
+    header: "Actions",
+    hideHeader: true,
+    className: "text-right",
+    cell: (c) => (
+      <Link to={`/teach/courses/${c.id}`} className="btn btn-secondary btn-sm">
+        <Pencil size={14} /> Edit
+      </Link>
+    ),
+  },
+];
 
 export default function TeacherCourses() {
-  // EXAMPLE: in the app this shows only the courses owned by the logged-in teacher.
+  // TODO API: GET /api/teach/courses (only the courses of the logged-in teacher)
+  const suspended = courses.filter((c) => c.status === "Suspended");
+
   return (
     <>
       <PageHeader
@@ -18,42 +48,30 @@ export default function TeacherCourses() {
         }
       />
 
-      {/* BACKEND-DEPENDENT: show only when at least one course is suspended by an admin */}
-      <p className="alert-danger mb-6">
-        <strong>UX Design Basics</strong> was suspended by an admin. Reason: copied content.
-      </p>
+      {suspended.map((c) => (
+        <p key={c.id} role="alert" className="alert alert-danger mb-6">
+          <strong>{c.title}</strong> was suspended by an admin. Reason:{" "}
+          {c.suspensionReason ?? "not given"}.
+        </p>
+      ))}
 
-      <div className="card overflow-x-auto">
-        <table className="w-full min-w-160">
-          <thead className="table-head">
-            <tr>
-              <th className="th">Course</th>
-              <th className="th">Status</th>
-              <th className="th">Lessons</th>
-              <th className="th">Students</th>
-              <th className="th" />
-            </tr>
-          </thead>
-          <tbody className="table-body">
-            {courses.map((c) => (
-              <tr key={c.id}>
-                <td className="td">
-                  <p className="font-semibold text-ink">{c.title}</p>
-                  <p className="text-xs text-muted">{c.category}</p>
-                </td>
-                <td className="td"><StatusBadge status={c.status} /></td>
-                <td className="td">{c.lessons}</td>
-                <td className="td">{c.students}</td>
-                <td className="td text-right">
-                  <Link to={`/teach/courses/${c.id}`} className="btn btn-secondary btn-sm">
-                    <Pencil size={14} /> Edit
-                  </Link>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <DataTable
+        columns={columns}
+        rows={courses}
+        rowKey={(c) => c.id}
+        empty={
+          <EmptyState
+            icon={BookOpen}
+            title="You have no courses yet"
+            description="Create your first course and publish it when it is ready."
+            action={
+              <Link to="/teach/courses/new" className="btn btn-primary">
+                <Plus size={16} /> New course
+              </Link>
+            }
+          />
+        }
+      />
     </>
   );
 }

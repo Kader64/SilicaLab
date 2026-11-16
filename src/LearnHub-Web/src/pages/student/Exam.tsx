@@ -1,24 +1,23 @@
 import { useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
+import CourseNotFound from "../../components/course/CourseNotFound";
 import ExamCancelled from "../../components/exam/ExamCancelled";
 import ExamHeader from "../../components/exam/ExamHeader";
 import ExamIntro from "../../components/exam/ExamIntro";
+import ExamLeaveDialog from "../../components/exam/ExamLeaveDialog";
 import FocusWarningDialog from "../../components/exam/FocusWarningDialog";
-import LeaveExamDialog from "../../components/exam/ExamLeaveDialog";
 import QuestionCard from "../../components/exam/QuestionCard";
-import { examSettings } from "../../components/exam/ExamSettings";
 import SubmitDialog from "../../components/exam/SubmitDialog";
 import { useCountdown } from "../../hooks/useCountdown";
 import { useExamGuard } from "../../hooks/useExamGuard";
-import { courses, examQuestions } from "../../examples/exampledata";
-
-const course = courses[0];
+import { examQuestions, examSettings, getCourse } from "../../mocks/data";
 
 type Phase = "intro" | "running" | "cancelled";
 
 export default function Exam() {
+  const { courseId } = useParams();
+  const course = getCourse(courseId);
   const navigate = useNavigate();
-  const resultPath = `/exam/${course.id}/result`;
   const { timeLimitMinutes, maxFocusLosses } = examSettings;
 
   const [phase, setPhase] = useState<Phase>("intro");
@@ -29,9 +28,30 @@ export default function Exam() {
   const submitted = useRef(false);
 
   const running = phase === "running";
-  const total = examQuestions.length;
-  const answered = examQuestions.filter((q) => answers[q.id] !== undefined).length;
-  const unanswered = total - answered;
+  const guard = useExamGuard(running, maxFocusLosses, () => {
+    setConfirmOpen(false);
+    setPhase("cancelled");
+  });
+
+  // TODO API: questions come from GET /api/exams/{courseId}/attempts/{id}, without the correct answers
+  const questions = examQuestions.map(({ id, text, answers: options }) => ({
+    id,
+    text,
+    answers: options,
+  }));
+  const total = questions.length;
+  const answered = questions.filter((q) => answers[q.id] !== undefined).length;
+  const resultPath = `/exam/${courseId}/result`;
+
+  function submit() {
+    if (submitted.current) return;
+    submitted.current = true;
+    // TODO API: POST /api/attempts/{id}/submit
+    guard.allowLeaving();
+    navigate(resultPath);
+  }
+
+  const remainingMs = useCountdown(expiresAt, running, submit);
 
   function start() {
     // TODO API: POST /api/exams/{courseId}/attempts. Starting uses up an attempt.
@@ -39,33 +59,33 @@ export default function Exam() {
     setPhase("running");
   }
 
-  function submit() {
-    if (submitted.current) return;
-    submitted.current = true;
-    // TODO API: POST /api/attempts/{id}/submit
-    guard.allowLeaving(); // the exam itself navigates away, so don't block it
-    navigate(resultPath);
-  }
-
   function reviewUnanswered() {
     setConfirmOpen(false);
     setShowUnanswered(true);
-    const first = examQuestions.find((q) => answers[q.id] === undefined);
-    if (first) document.getElementById(`question-${first.id}`)?.scrollIntoView({ block: "center" });
+    const first = questions.find((q) => answers[q.id] === undefined);
+    if (first)
+      document
+        .getElementById(`question-${first.id}`)
+        ?.scrollIntoView({ block: "center" });
   }
 
-  const remainingMs = useCountdown(expiresAt, running, submit);
-  const guard = useExamGuard(running, maxFocusLosses, () => {
-    setConfirmOpen(false);
-    setPhase("cancelled");
-  });
+  if (!course) return <CourseNotFound />;
 
   if (phase === "intro") {
-    return <ExamIntro course={course} questionCount={total} settings={examSettings} onStart={start} />;
+    return (
+      <ExamIntro
+        course={course}
+        questionCount={total}
+        settings={examSettings}
+        onStart={start}
+      />
+    );
   }
 
   if (phase === "cancelled") {
-    return <ExamCancelled maxWarnings={maxFocusLosses} resultPath={resultPath} />;
+    return (
+      <ExamCancelled maxWarnings={maxFocusLosses} resultPath={resultPath} />
+    );
   }
 
   return (
@@ -80,7 +100,7 @@ export default function Exam() {
       />
 
       <ol className="mt-6 space-y-5">
-        {examQuestions.map((q, index) => (
+        {questions.map((q, index) => (
           <QuestionCard
             key={q.id}
             question={q}
@@ -99,25 +119,30 @@ export default function Exam() {
         </span>
         <button
           type="button"
-          className="btn btn-primary w-full px-6 py-2.5 sm:w-auto"
+          className="btn btn-primary w-full px-6 sm:w-auto"
           onClick={() => setConfirmOpen(true)}
         >
           Submit exam
         </button>
       </div>
 
+      {/* Dialogs */}
       <FocusWarningDialog
         open={guard.warningOpen}
         onClose={guard.dismissWarning}
         count={guard.warnings}
         limit={maxFocusLosses}
       />
-      <LeaveExamDialog open={guard.leaveDialogOpen} onStay={guard.stay} onLeave={guard.leaveAnyway} />
+      <ExamLeaveDialog
+        open={guard.leaveDialogOpen}
+        onStay={guard.stay}
+        onLeave={guard.leaveAnyway}
+      />
       <SubmitDialog
         open={confirmOpen}
         onClose={() => setConfirmOpen(false)}
         total={total}
-        unanswered={unanswered}
+        unanswered={total - answered}
         onReview={reviewUnanswered}
         onSubmit={submit}
       />

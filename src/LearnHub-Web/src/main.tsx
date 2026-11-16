@@ -1,42 +1,43 @@
-import { StrictMode } from "react";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { lazy, StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { createBrowserRouter, createRoutesFromElements, Route, RouterProvider } from "react-router-dom";
 import "./index.css";
 
-import Welcome from "./pages/Welcome";
-import NotFound from "./pages/NotFound";
+import AdminLayout from "./layout/AdminLayout";
+import AppLayout from "./layout/AppLayout";
 import AuthLayout from "./layout/AuthLayout";
+import { queryClient } from "./lib/queryClient";
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
-
-import AppLayout from "./layout/AppLayout";
-import Courses from "./pages/student/Courses";
+import NotFound from "./pages/NotFound";
+import RouteError from "./pages/RouteError";
 import CourseDetails from "./pages/student/CourseDetails";
-import MyLearning from "./pages/student/MyLearning";
-import Lesson from "./pages/student/Lesson";
+import Certificates from "./pages/student/Certificates";
+import Courses from "./pages/student/Courses";
 import Exam from "./pages/student/Exam";
 import ExamResult from "./pages/student/ExamResult";
-import Certificates from "./pages/student/Certificates";
-
-import TeacherCourses from "./pages/teacher/TeacherCourses";
-import CourseEditor from "./pages/teacher/CourseEditor";
-import LessonEditor from "./pages/teacher/LessonEditor";
-import ExamEditor from "./pages/teacher/ExamEditor";
-
-import AdminLayout from "./layout/AdminLayout";
-import Dashboard from "./pages/admin/Dashboard";
-import Users from "./pages/admin/Users";
-import AdminCourses from "./pages/admin/AdminCourses";
-import AdminCertificates from "./pages/admin/AdminCertificates";
-import Categories from "./pages/admin/Categories";
-import AuditLog from "./pages/admin/AuditLog";
+import MyLearning from "./pages/student/MyLearning";
 import Verify from "./pages/Verify";
+import Welcome from "./pages/Welcome";
+
+const Lesson = lazy(() => import("./pages/student/Lesson"));
+const TeacherCourses = lazy(() => import("./pages/teacher/TeacherCourses"));
+const CourseEditor = lazy(() => import("./pages/teacher/CourseEditor"));
+const LessonEditor = lazy(() => import("./pages/teacher/LessonEditor"));
+const ExamEditor = lazy(() => import("./pages/teacher/ExamEditor"));
+const Dashboard = lazy(() => import("./pages/admin/Dashboard"));
+const Users = lazy(() => import("./pages/admin/Users"));
+const AdminCourses = lazy(() => import("./pages/admin/AdminCourses"));
+const AdminCertificates = lazy(() => import("./pages/admin/AdminCertificates"));
+const Categories = lazy(() => import("./pages/admin/Categories"));
+const AuditLog = lazy(() => import("./pages/admin/AuditLog"));
 
 const router = createBrowserRouter(
   createRoutesFromElements(
-    <>
+    <Route errorElement={<RouteError />}>
       <Route path="/" element={<Welcome />} />
-      <Route path="/verify" element={<Verify />} />
+      <Route path="/verify/:code?" element={<Verify />} />
 
       <Route element={<AuthLayout />}>
         <Route path="/login" element={<Login />} />
@@ -69,12 +70,14 @@ const router = createBrowserRouter(
       </Route>
 
       <Route path="*" element={<NotFound />} />
-    </>,
+    </Route>,
   ),
 );
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <RouterProvider router={router} />
+    <QueryClientProvider client={queryClient}>
+      <RouterProvider router={router} />
+    </QueryClientProvider>
   </StrictMode>,
 );

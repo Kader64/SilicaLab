@@ -1,5 +1,6 @@
 import { Lock } from "lucide-react";
 import { Link } from "react-router-dom";
+import { pluralize } from "../../lib/format";
 
 type Props = { remaining: number; examPath: string };
 
@@ -18,8 +19,8 @@ export default function ExamUnlock({ remaining, examPath }: Props) {
 
   return (
     <p className="mt-6 flex items-center justify-center gap-2 text-sm font-medium text-muted sm:justify-start">
-      <Lock size={16} />
-      Complete {remaining} more {remaining === 1 ? "lesson" : "lessons"} to unlock the final exam.
+      <Lock size={16} aria-hidden="true" />
+      Complete {remaining} more {pluralize(remaining, "lesson")} to unlock the final exam.
     </p>
   );
 }

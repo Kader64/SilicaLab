@@ -1,67 +1,82 @@
-import { ClipboardCheck, PlayCircle } from "lucide-react";
+import { GraduationCap } from "lucide-react";
 import { Link } from "react-router-dom";
-import CourseCover from "../../components/CourseCover";
-import PageHeader from "../../components/PageHeader";
-import { courses } from "../../examples/exampledata";
-
-const enrollments = [
-  { course: courses[0], progress: 40 },
-  { course: courses[1], progress: 100 },
-  { course: courses[2], progress: 0 },
-];
+import CourseCover from "../../components/course/CourseCover";
+import EmptyState from "../../components/ui/EmptyState";
+import PageHeader from "../../components/ui/PageHeader";
+import ProgressBar from "../../components/ui/ProgressBar";
+import { enrollments } from "../../mocks/data";
 
 export default function MyLearning() {
+  // TODO API: GET /api/me/enrollments
+  if (enrollments.length === 0) {
+    return (
+      <>
+        <PageHeader title="My learning" />
+        <div className="card">
+          <EmptyState
+            icon={GraduationCap}
+            title="You have not enrolled in any course yet"
+            description="Pick a course and your progress will show up here."
+            action={
+              <Link to="/courses" className="btn btn-primary">
+                Browse courses
+              </Link>
+            }
+          />
+        </div>
+      </>
+    );
+  }
+
   return (
     <>
-      <PageHeader title="My learning" description="Courses you are enrolled in and your progress." />
+      <PageHeader
+        title="My learning"
+        description="Pick up where you left off."
+      />
 
-      <div className="mt-6 grid gap-5">
+      <ul className="space-y-4">
         {enrollments.map(({ course, progress }) => (
-          <div
+          <li
             key={course.id}
-            className="group flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white transition-all duration-300 hover:-translate-y-0.5 sm:flex-row"
+            className="card-feature card-interactive group flex flex-col overflow-hidden sm:flex-row"
           >
-            <CourseCover cover={course} className="h-40 shrink-0 sm:h-auto sm:w-56" />
+            <CourseCover
+              cover={course}
+              className="h-32 sm:h-auto sm:w-56 sm:shrink-0"
+            />
 
-            <div className="flex flex-1 flex-col p-5 sm:flex-row sm:items-center sm:p-6">
-              <div className="flex min-w-0 flex-1 flex-col">
-                <Link to={`/courses/${course.id}`} className="truncate text-lg font-bold text-slate-900 transition-colors hover:text-slate-700">
-                  {course.title}
-                </Link>
-                <p className="mt-1 text-sm font-medium text-slate-500">
-                  By {course.teacher} · {course.lessons} lessons
+            <div className="flex flex-1 flex-col gap-4 p-5 sm:flex-row sm:items-center">
+              <div className="min-w-0 flex-1">
+                <h2 className="text-lg font-bold text-ink">
+                  <Link to={`/courses/${course.id}`}>{course.title}</Link>
+                </h2>
+                <p className="mt-0.5 text-xs font-medium text-muted">
+                  By {course.teacher}
                 </p>
-
-                <div className="mt-5 flex items-center gap-4">
-                  <div className="h-2 w-full max-w-sm overflow-hidden rounded-full bg-slate-100">
-                    <div
-                      className="h-full rounded-full bg-slate-800 transition-all duration-500"
-                      style={{ width: `${progress}%` }}
-                    />
-                  </div>
-                  <span className="w-10 text-right text-sm font-semibold tabular-nums text-slate-600">
-                    {progress}%
-                  </span>
+                <div className="mt-4 max-w-sm">
+                  <ProgressBar
+                    done={progress}
+                    total={100}
+                    valueLabel={`${progress}%`}
+                    label={`Progress in ${course.title}`}
+                  />
                 </div>
               </div>
-
-              <div className="mt-5 sm:ml-6 sm:mt-0 sm:shrink-0">
-                {progress === 100 ? (
-                  <Link to={`/exam/${course.id}`} className="btn btn-primary flex w-full items-center justify-center gap-2 py-2.5 sm:w-44">
-                    <ClipboardCheck size={18} />
-                    Take the exam
-                  </Link>
-                ) : (
-                  <Link to={`/learn/${course.id}`} className="btn btn-primary flex w-full items-center justify-center gap-2 py-2.5 sm:w-44">
-                    <PlayCircle size={18} />
-                    {progress === 0 ? "Start course" : "Continue"}
-                  </Link>
-                )}
-              </div>
+              <Link
+                to={`/courses/${course.id}`}
+                className="btn btn-primary w-full sm:w-44"
+              >
+                {progress === 0
+                  ? "Start learning"
+                  : progress === 100
+                    ? "Review course"
+                    : "Continue"}
+              </Link>
             </div>
-          </div>
+          </li>
         ))}
-      </div>
+      </ul>
     </>
   );
 }

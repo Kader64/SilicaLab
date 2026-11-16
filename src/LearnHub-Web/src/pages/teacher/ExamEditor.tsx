@@ -1,65 +1,143 @@
-import { Plus, Trash2 } from "lucide-react";
-import { Link, useParams } from "react-router-dom";
-import PageHeader from "../../components/PageHeader";
-import { examQuestions } from "../../examples/exampledata";
+import { Plus } from "lucide-react";
+import { useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import QuestionEditor, {
+  type EditorQuestion,
+} from "../../components/examEditor/QuestionEditor";
+import Field from "../../components/ui/Field";
+import PageHeader from "../../components/ui/PageHeader";
+import { examQuestions, examSettings } from "../../mocks/data";
+import { uid } from "../../lib/uid";
+
+const newQuestion = (): EditorQuestion => ({
+  id: uid(),
+  text: "",
+  answers: [
+    { id: uid(), text: "" },
+    { id: uid(), text: "" },
+  ],
+  correct: 0,
+});
 
 export default function ExamEditor() {
   const { id } = useParams();
+  const navigate = useNavigate();
+
+  // TODO API: GET /api/courses/{id}/exam
+  const [questions, setQuestions] = useState<EditorQuestion[]>(() =>
+    examQuestions.map((q) => ({
+      id: q.id,
+      text: q.text,
+      correct: q.correct,
+      answers: q.answers.map((text) => ({ id: uid(), text })),
+    })),
+  );
+
+  const complete = questions.every(
+    (q) => q.text.trim() && q.answers.every((a) => a.text.trim()),
+  );
+  const canSave = questions.length > 0 && complete;
 
   return (
-    <>
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        // TODO API: PUT /api/courses/{id}/exam
+        navigate(`/teach/courses/${id}`);
+      }}
+    >
       <PageHeader
         title="Edit exam"
         description="Single choice questions: 2-6 answers each, exactly one correct."
-        actions={<Link to={`/teach/courses/${id}`} className="btn btn-secondary">← Back to course</Link>}
+        actions={
+          <Link to={`/teach/courses/${id}`} className="btn btn-secondary">
+            Back to course
+          </Link>
+        }
       />
 
       <section className="grid gap-5 pb-8 sm:grid-cols-3">
-        <div>
-          <label className="label">Pass mark (%)</label>
-          <input type="number" className="input" defaultValue={70} min={50} max={100} />
-          <p className="mt-1 text-xs text-muted">Between 0 and 100.</p>
-        </div>
-        <div>
-          <label className="label">Max attempts</label>
-          <input type="number" className="input" placeholder="Unlimited" min={1} />
-          <p className="mt-1 text-xs text-muted">Leave empty for unlimited.</p>
-        </div>
-        <div>
-          <label className="label">Time limit (minutes)</label>
-          <input type="number" className="input" placeholder="No limit" min={1} />
-          <p className="mt-1 text-xs text-muted">Optional.</p>
-        </div>
+        <Field label="Pass mark (%)" hint="Between 0 and 100.">
+          {(control) => (
+            <input
+              {...control}
+              type="number"
+              className="input"
+              defaultValue={examSettings.passMarkPercent}
+              min={0}
+              max={100}
+              required
+            />
+          )}
+        </Field>
+        <Field label="Max attempts" hint="Leave empty for unlimited.">
+          {(control) => (
+            <input
+              {...control}
+              type="number"
+              className="input"
+              placeholder="Unlimited"
+              min={1}
+            />
+          )}
+        </Field>
+        <Field label="Time limit (minutes)" hint="Optional.">
+          {(control) => (
+            <input
+              {...control}
+              type="number"
+              className="input"
+              placeholder="No limit"
+              min={1}
+            />
+          )}
+        </Field>
       </section>
 
-      <ol className="divide-y divide-line border-y border-line">
-        {examQuestions.map((q, qi) => (
-          <li key={q.id} className="py-6">
-            <div className="flex items-start gap-3">
-              <span className="w-6 pt-2.5 text-sm tabular-nums text-muted">{qi + 1}.</span>
-              <input className="input font-semibold" defaultValue={q.text} />
-              <button className="icon-btn icon-btn-danger mt-1.5" title="Delete question"><Trash2 size={18} /></button>
-            </div>
+      {questions.length === 0 ? (
+        <p className="alert alert-warning">
+          The exam needs at least one question before the course can be
+          published.
+        </p>
+      ) : (
+        <ol className="divide-y divide-line border-y border-line">
+          {questions.map((question, index) => (
+            <QuestionEditor
+              key={question.id}
+              question={question}
+              index={index}
+              onChange={(next) =>
+                setQuestions(
+                  questions.map((q) => (q.id === next.id ? next : q)),
+                )
+              }
+              onDelete={() =>
+                setQuestions(questions.filter((q) => q.id !== question.id))
+              }
+            />
+          ))}
+        </ol>
+      )}
 
-            <div className="mt-4 space-y-2.5 pl-9">
-              {q.answers.map((answer, ai) => (
-                <div key={answer} className="flex items-center gap-3">
-                  <input type="radio" name={`correct-${q.id}`} defaultChecked={ai === q.correct} className="accent-accent" title="Correct answer" />
-                  <input className="input" defaultValue={answer} />
-                  <button className="icon-btn" title="Delete answer"><Trash2 size={16} /></button>
-                </div>
-              ))}
-              {/* Disable this button when the question already has 6 answers */}
-              <button className="btn btn-secondary btn-sm"><Plus size={14} /> Add answer</button>
-            </div>
-          </li>
-        ))}
-      </ol>
-
-      <div className="mt-6 flex flex-wrap justify-between gap-3">
-        <button className="btn btn-secondary"><Plus size={16} /> Add question</button>
-        <button className="btn btn-primary">Save exam</button>
+      <div className=" mt-6 flex flex-wrap items-center justify-between gap-3">
+        <button
+          type="button"
+          className="btn btn-secondary"
+          onClick={() => setQuestions([...questions, newQuestion()])}
+        >
+          <Plus size={16} /> Add question
+        </button>
+        <div className="flex items-center gap-3">
+          {!canSave && questions.length > 0 && (
+            <span className="text-sm text-muted">
+              Fill in every question and answer to save.
+            </span>
+          )}
+          <button type="submit" className="btn btn-primary" disabled={!canSave}>
+            Save exam
+          </button>
+        </div>
       </div>
-    </>
+    </form>
   );
 }

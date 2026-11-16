@@ -1,11 +1,13 @@
 import { Outlet } from "react-router-dom";
+import Logo from "../components/ui/Logo";
 
 export default function AuthLayout() {
   return (
-      <div className="flex items-center justify-center p-6 sm:p-12 mt-20">
-        <div className="w-full max-w-md">
-          <Outlet />
-        </div>
-      </div>
+    <div className="flex min-h-screen flex-col items-center px-6 py-10 sm:py-16">
+      <Logo to="/" />
+      <main id="main" className="mt-10 w-full max-w-md">
+        <Outlet />
+      </main>
+    </div>
   );
 }

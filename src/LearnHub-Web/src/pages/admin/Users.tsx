@@ -1,77 +1,154 @@
-import { Ban, Search, UserCheck, UserCog } from "lucide-react";
-import PageHeader from "../../components/PageHeader";
-import StatusBadge from "../../components/StatusBadge";
-import { users } from "../../examples/exampledata";
+import { Ban, CheckCircle2, Users as UsersIcon } from "lucide-react";
+import { useMemo, useState } from "react";
+import RoleDialog from "../../components/admin/RoleDialog";
+import ConfirmDialog from "../../components/ui/ConfirmDialog";
+import DataTable, { type Column } from "../../components/ui/DataTable";
+import EmptyState from "../../components/ui/EmptyState";
+import FilterSelect from "../../components/ui/FilterSelect";
+import PageHeader from "../../components/ui/PageHeader";
+import SearchInput from "../../components/ui/SearchInput";
+import StatusBadge from "../../components/ui/StatusBadge";
+import { users as initialUsers } from "../../mocks/data";
+import type { User, UserRole } from "../../types";
+
+const roleOptions = [
+  { value: "all", label: "All roles" },
+  { value: "Student", label: "Student" },
+  { value: "Teacher", label: "Teacher" },
+  { value: "Admin", label: "Admin" },
+];
 
 export default function Users() {
+  const [items, setItems] = useState(initialUsers);
+  const [query, setQuery] = useState("");
+  const [role, setRole] = useState("all");
+  const [roleTarget, setRoleTarget] = useState<User | null>(null);
+  const [disableTarget, setDisableTarget] = useState<User | null>(null);
+
+  const update = (id: string, patch: Partial<User>) =>
+    setItems((prev) => prev.map((u) => (u.id === id ? { ...u, ...patch } : u)));
+
+  const rows = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return items.filter(
+      (u) =>
+        (role === "all" || u.role === role) &&
+        (!q ||
+          u.name.toLowerCase().includes(q) ||
+          u.email.toLowerCase().includes(q)),
+    );
+  }, [items, query, role]);
+
+  // TODO API: GET /api/admin/users, PUT /api/admin/users/{id}/role, PUT /api/admin/users/{id}/active
+  const columns: Column<User>[] = [
+    {
+      header: "User",
+      cell: (u) => (
+        <>
+          <p className="font-semibold text-ink">{u.name}</p>
+          <p className="text-xs text-muted">{u.email}</p>
+        </>
+      ),
+    },
+    { header: "Role", cell: (u) => u.role },
+    {
+      header: "Status",
+      cell: (u) => <StatusBadge status={u.active ? "Active" : "Disabled"} />,
+    },
+    { header: "Courses", cell: (u) => u.courses },
+    { header: "Certificates", cell: (u) => u.certificates },
+    {
+      header: "Actions",
+      hideHeader: true,
+      className: "text-right",
+      cell: (u) =>
+        u.role === "Admin" ? null : (
+          <div className="flex justify-end gap-2">
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              onClick={() => setRoleTarget(u)}
+            >
+              Change role
+            </button>
+            {u.active ? (
+              <button
+                type="button"
+                className="btn btn-outline-danger btn-sm w-28"
+                onClick={() => setDisableTarget(u)}
+              >
+                <Ban size={14} /> Disable
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="btn btn-outline-success btn-sm w-28"
+                onClick={() => update(u.id, { active: true })}
+              >
+                <CheckCircle2 size={14} /> Enable
+              </button>
+            )}
+          </div>
+        ),
+    },
+  ];
+
   return (
     <>
-      <PageHeader title="Users" description="Search, filter, disable accounts and change roles." />
+      <PageHeader title="Users" description="Manage roles and access." />
 
-      <div className="mb-5 flex flex-col gap-3 sm:flex-row">
-        <div className="relative flex-1">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-faint" size={18} />
-          <input className="input pl-10" placeholder="Search by name or email..." />
-        </div>
-        <select className="input sm:w-40"><option>All roles</option><option>Student</option><option>Teacher</option><option>Admin</option></select>
-        <select className="input sm:w-40"><option>All statuses</option><option>Active</option><option>Disabled</option></select>
+      <div className="toolbar">
+        <SearchInput
+          value={query}
+          onChange={setQuery}
+          placeholder="Search by name or email..."
+        />
+        <FilterSelect
+          label="Role"
+          value={role}
+          onChange={setRole}
+          options={roleOptions}
+        />
       </div>
 
-      <div className="card overflow-x-auto">
-        <table className="w-full min-w-[820px]">
-          <thead className="table-head">
-            <tr>
-              <th className="th">User</th>
-              <th className="th">Role</th>
-              <th className="th">Courses</th>
-              <th className="th">Enrollments</th>
-              <th className="th">Certificates</th>
-              <th className="th">Status</th>
-              <th className="th" />
-            </tr>
-          </thead>
-          <tbody className="table-body">
-            {users.map((u) => (
-              <tr key={u.id}>
-                <td className="td">
-                  <p className="font-semibold text-ink">{u.name}</p>
-                  <p className="text-xs text-muted">{u.email}</p>
-                </td>
-                <td className="td">{u.role}</td>
-                <td className="td">{u.courses}</td>
-                <td className="td">{u.enrollments}</td>
-                <td className="td">{u.certificates}</td>
-                <td className="td"><StatusBadge status={u.active ? "Active" : "Disabled"} /></td>
-                <td className="td">
-                  {u.role === "Admin" ? (
-                    <span className="block text-right text-xs text-muted">Protected</span>
-                  ) : (
-                    <div className="flex justify-end gap-2">
-                      <button className="btn btn-secondary btn-sm">
-                        <UserCog size={14} /> Role
-                      </button>
-                      {u.active ? (
-                        <button className="btn btn-secondary btn-sm text-danger w-24 justify-center">
-                          <Ban size={14} /> Disable
-                        </button>
-                      ) : (
-                        <button className="btn btn-secondary btn-sm text-success w-24 justify-center">
-                          <UserCheck size={14} /> Enable
-                        </button>
-                      )}
-                    </div>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <DataTable
+        columns={columns}
+        rows={rows}
+        rowKey={(u) => u.id}
+        empty={
+          <EmptyState
+            icon={UsersIcon}
+            title="No users found"
+            description="Try a different search or role."
+          />
+        }
+      />
 
-      {/* Role change rule: Teacher to Student is blocked while the user owns any course.
-          Show this message in the role dialog when that happens:
-      <p className="alert-danger">This teacher still owns courses and cannot become a student.</p>
-      */}
+      <RoleDialog
+        user={roleTarget}
+        onClose={() => setRoleTarget(null)}
+        onConfirm={(newRole: UserRole) => {
+          if (roleTarget) update(roleTarget.id, { role: newRole });
+          setRoleTarget(null);
+        }}
+      />
+
+      <ConfirmDialog
+        open={disableTarget !== null}
+        title="Disable this account?"
+        tone="danger"
+        confirmLabel="Disable account"
+        onCancel={() => setDisableTarget(null)}
+        onConfirm={() => {
+          if (disableTarget) update(disableTarget.id, { active: false });
+          setDisableTarget(null);
+        }}
+      >
+        <p>
+          <strong className="text-ink">{disableTarget?.name}</strong> will not
+          be able to log in until the account is enabled again.
+        </p>
+      </ConfirmDialog>
     </>
   );
 }

@@ -1,69 +1,97 @@
-import { RotateCcw, Search, ShieldOff } from "lucide-react";
-import PageHeader from "../../components/PageHeader";
-import StatusBadge from "../../components/StatusBadge";
-import { certificates } from "../../examples/exampledata";
+import { Award, Ban, CheckCircle2 } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
+import DataTable, { type Column } from "../../components/ui/DataTable";
+import EmptyState from "../../components/ui/EmptyState";
+import FilterSelect from "../../components/ui/FilterSelect";
+import PageHeader from "../../components/ui/PageHeader";
+import ReasonDialog from "../../components/ui/ReasonDialog";
+import SearchInput from "../../components/ui/SearchInput";
+import StatusBadge from "../../components/ui/StatusBadge";
+import { certificates as initialCertificates } from "../../mocks/data";
+import type { Certificate } from "../../types";
+
+const statusOptions = [
+  { value: "all", label: "All statuses" },
+  { value: "Valid", label: "Valid" },
+  { value: "Revoked", label: "Revoked" },
+];
 
 export default function AdminCertificates() {
+  const [items, setItems] = useState(initialCertificates);
+  const [query, setQuery] = useState("");
+  const [status, setStatus] = useState("all");
+  const [target, setTarget] = useState<Certificate | null>(null);
+
+  const rows = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return items.filter(
+      (c) =>
+        (status === "all" || c.status === status) &&
+        (!q || [c.code, c.student, c.course].some((text) => text.toLowerCase().includes(q))),
+    );
+  }, [items, query, status]);
+
+  // TODO API: PUT /api/admin/certificates/{code}/revoke with { reason }, PUT /api/admin/certificates/{code}/restore
+  const setCertificateStatus = (code: string, next: Certificate["status"]) =>
+    setItems((prev) => prev.map((c) => (c.code === code ? { ...c, status: next } : c)));
+
+  const columns: Column<Certificate>[] = [
+    { header: "Code", cell: (c) => <span className="font-mono text-sm">{c.code}</span> },
+    { header: "Student", cell: (c) => c.student },
+    { header: "Course", cell: (c) => c.course },
+    { header: "Issued", cell: (c) => c.date },
+    { header: "Status", cell: (c) => <StatusBadge status={c.status} /> },
+    {
+      header: "Actions",
+      hideHeader: true,
+      className: "text-right",
+      cell: (c) => (
+        <div className="flex justify-end gap-2">
+          <Link to={`/verify/${c.code}`} className="btn btn-secondary btn-sm">
+            View
+          </Link>
+          {c.status === "Revoked" ? (
+            <button type="button" className="btn btn-outline-success btn-sm w-28" onClick={() => setCertificateStatus(c.code, "Valid")}>
+              <CheckCircle2 size={14} /> Restore
+            </button>
+          ) : (
+            <button type="button" className="btn btn-outline-danger btn-sm w-28" onClick={() => setTarget(c)}>
+              <Ban size={14} /> Revoke
+            </button>
+          )}
+        </div>
+      ),
+    },
+  ];
+
   return (
     <>
-      <PageHeader title="Certificates" description="Search by code or student name. Revoke with a reason, or restore." />
+      <PageHeader title="Certificates" description="Search and revoke issued certificates." />
 
-      <div className="mb-5 flex flex-col gap-3 sm:flex-row">
-        <div className="relative flex-1">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-faint" size={18} />
-          <input className="input pl-10" placeholder="Code or student name..." />
-        </div>
-        <select className="input sm:w-40">
-          <option>All students</option>
-          {/* Add student options here or dynamically map them */}
-        </select>
-        <select className="input sm:w-40">
-          <option>All courses</option>
-          {/* Add course options here or dynamically map them */}
-        </select>
-        <select className="input sm:w-40">
-          <option>All statuses</option>
-          <option>Valid</option>
-          <option>Revoked</option>
-        </select>
+      <div className="toolbar">
+        <SearchInput value={query} onChange={setQuery} placeholder="Search by code, student or course..." />
+        <FilterSelect label="Status" value={status} onChange={setStatus} options={statusOptions} />
       </div>
 
-      <div className="card overflow-x-auto">
-        <table className="w-full min-w-190">
-          <thead className="table-head">
-            <tr>
-              <th className="th">Code</th>
-              <th className="th">Student</th>
-              <th className="th">Course</th>
-              <th className="th">Issued</th>
-              <th className="th">Status</th>
-              <th className="th" />
-            </tr>
-          </thead>
-          <tbody className="table-body">
-            {certificates.map((c) => (
-              <tr key={c.code}>
-                <td className="td font-mono text-xs font-semibold text-ink">{c.code}</td>
-                <td className="td">{c.student}</td>
-                <td className="td">{c.course}</td>
-                <td className="td">{c.date}</td>
-                <td className="td"><StatusBadge status={c.status} /></td>
-                <td className="td text-right">
-                  {c.status === "Revoked" ? (
-                    <button className="btn btn-secondary btn-sm text-success w-28 justify-center">
-                      <RotateCcw size={14} /> Restore
-                    </button>
-                  ) : (
-                    <button className="btn btn-secondary btn-sm text-danger w-28 justify-center">
-                      <ShieldOff size={14} /> Revoke
-                    </button>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <DataTable
+        columns={columns}
+        rows={rows}
+        rowKey={(c) => c.code}
+        empty={<EmptyState icon={Award} title="No certificates found" description="Try a different search or status." />}
+      />
+
+      <ReasonDialog
+        open={target !== null}
+        title="Revoke this certificate?"
+        description={`Verification of ${target?.code} will show it as revoked.`}
+        confirmLabel="Revoke certificate"
+        onClose={() => setTarget(null)}
+        onConfirm={() => {
+          if (target) setCertificateStatus(target.code, "Revoked");
+          setTarget(null);
+        }}
+      />
     </>
   );
 }

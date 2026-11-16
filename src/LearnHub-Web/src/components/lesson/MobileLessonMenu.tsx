@@ -1,7 +1,8 @@
 import { ChevronDown } from "lucide-react";
 import { useState } from "react";
+import { cn } from "../../lib/cn";
+import ProgressBar from "../ui/ProgressBar";
 import LessonList, { type LessonListProps } from "./LessonList";
-import ProgressBar from "./ProgressBar";
 
 type Props = Omit<LessonListProps, "onNavigate">;
 
@@ -20,7 +21,7 @@ export default function MobileLessonMenu(list: Props) {
           </span>
           <span className="block truncate font-bold text-ink">{current?.title}</span>
         </span>
-        <ChevronDown size={18} className={`shrink-0 text-muted transition-transform ${open ? "rotate-180" : ""}`} />
+        <ChevronDown size={18} aria-hidden="true" className={cn("shrink-0 text-muted transition-transform", open && "rotate-180")} />
       </summary>
 
       <div className="space-y-4 border-t border-line p-3">

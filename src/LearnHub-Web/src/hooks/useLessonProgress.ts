@@ -1,8 +1,8 @@
 import { useCallback, useState } from "react";
-import type { LessonItem } from "../components/lesson/lessonUtils";
+import type { Lesson } from "../types";
 
-/** Which lessons the student has completed, and the numbers derived from it. */
-export function useLessonProgress(lessons: LessonItem[]) {
+/** Which lessons the student has completed, and how many are left. */
+export function useLessonProgress(lessons: Lesson[]) {
   const [completedIds, setCompletedIds] = useState(
     () => new Set(lessons.filter((l) => l.completed).map((l) => l.id)),
   );
@@ -20,8 +20,5 @@ export function useLessonProgress(lessons: LessonItem[]) {
     });
   }, []);
 
-  const doneCount = completedIds.size;
-  const remaining = lessons.length - doneCount;
-
-  return { completedIds, doneCount, remaining, allDone: remaining === 0, complete, undo };
+  return { completedIds, remaining: lessons.length - completedIds.size, complete, undo };
 }

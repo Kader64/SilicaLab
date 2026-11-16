@@ -1,50 +1,82 @@
-import { Download, ExternalLink } from "lucide-react";
+import { Award, Download, ExternalLink } from "lucide-react";
 import { Link } from "react-router-dom";
-import PageHeader from "../../components/PageHeader";
-import StatusBadge from "../../components/StatusBadge";
-import { certificates } from "../../examples/exampledata";
-
-// EXAMPLE: the student's certificates (the last one is revoked to show that style)
-const mine = [certificates[0], certificates[2]];
+import DescriptionList from "../../components/ui/DescriptionList";
+import EmptyState from "../../components/ui/EmptyState";
+import PageHeader from "../../components/ui/PageHeader";
+import StatusBadge from "../../components/ui/StatusBadge";
+import { myCertificates } from "../../mocks/data";
 
 export default function Certificates() {
+  // TODO API: GET /api/me/certificates
+  if (myCertificates.length === 0) {
+    return (
+      <>
+        <PageHeader title="Certificates" />
+        <div className="card">
+          <EmptyState
+            icon={Award}
+            title="No certificates yet"
+            description="Finish a course and pass its exam to earn your first certificate."
+            action={
+              <Link to="/my-learning" className="btn btn-primary">
+                My learning
+              </Link>
+            }
+          />
+        </div>
+      </>
+    );
+  }
+
   return (
     <>
-      <PageHeader title="My certificates" description="Download your certificates or share the verification link." />
+      <PageHeader
+        title="Certificates"
+        description="Your certificates are verifiable by anyone with the code."
+      />
 
-      <div className="grid gap-5 md:grid-cols-2">
-        {mine.map((c) => (
-          <div key={c.code} className="card p-6">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <h3 className="text-lg font-bold text-ink">{c.course}</h3>
-                <p className="text-sm text-muted">Taught by {c.teacher}</p>
+      <ul className="grid gap-6 md:grid-cols-2">
+        {myCertificates.map((c) => {
+          const revoked = c.status === "Revoked";
+          return (
+            <li key={c.code} className="card-feature p-6">
+              <div className="flex items-start justify-between gap-3">
+                <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-accent-soft text-accent">
+                  <Award size={26} aria-hidden="true" />
+                </span>
+                <StatusBadge status={c.status} />
               </div>
-              <StatusBadge status={c.status} />
-            </div>
 
-            <dl className="mt-5 grid grid-cols-3 gap-4 border-t border-line pt-4 text-sm">
-              <div><dt className="text-muted">Score</dt><dd className="font-semibold text-ink">{c.score}%</dd></div>
-              <div><dt className="text-muted">Issued</dt><dd className="font-semibold text-ink">{c.date}</dd></div>
-              <div><dt className="text-muted">Code</dt><dd className="font-mono text-xs font-semibold text-ink">{c.code}</dd></div>
-            </dl>
+              <h2 className="mt-4 text-lg font-bold text-ink">{c.course}</h2>
+              <DescriptionList
+                className="mt-3"
+                items={[
+                  { label: "Issued", value: c.date },
+                  { label: "Score", value: `${c.score}%` },
+                  {
+                    label: "Code",
+                    value: <span className="font-mono">{c.code}</span>,
+                  },
+                ]}
+              />
 
-            <div className="mt-5 flex gap-3">
-              {/* Revoked certificates cannot be downloaded */}
-              <button className="btn btn-primary flex-1" disabled={c.status === "Revoked"}>
-                <Download size={16} /> Download PDF
-              </button>
-              <Link to={`/verify/${c.code}`} className="btn btn-secondary">
-                <ExternalLink size={16} /> Verify
-              </Link>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* VARIANT: student has no certificates yet
-      <p className="py-12 text-center text-muted">You have no certificates yet. Pass an exam to earn one.</p>
-      */}
+              <div className="mt-5 flex flex-wrap gap-3">
+                {/* TODO API: GET /api/certificates/{code}/pdf */}
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  disabled={revoked}
+                >
+                  <Download size={16} /> Download PDF
+                </button>
+                <Link to={`/verify/${c.code}`} className="btn btn-secondary">
+                  <ExternalLink size={16} /> Verify
+                </Link>
+              </div>
+            </li>
+          );
+        })}
+      </ul>
     </>
   );
 }

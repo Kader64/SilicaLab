@@ -1,5 +1,5 @@
 import { Check, Copy } from "lucide-react";
-import { useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import ReactMarkdown, { type Components } from "react-markdown";
 import rehypeHighlight from "rehype-highlight";
 import rehypeSanitize from "rehype-sanitize";
@@ -7,15 +7,18 @@ import "highlight.js/styles/github-dark.css";
 
 function CodeBlock({ children }: { children?: ReactNode }) {
   const ref = useRef<HTMLPreElement>(null);
+  const timer = useRef<number>(undefined);
   const [copied, setCopied] = useState(false);
+
+  useEffect(() => () => window.clearTimeout(timer.current), []);
 
   async function copy() {
     try {
       await navigator.clipboard.writeText(ref.current?.textContent ?? "");
       setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      timer.current = window.setTimeout(() => setCopied(false), 2000);
     } catch {
-      // Clipboard can be blocked (e.g. insecure context). Nothing to do.
+      // The clipboard can be blocked (e.g. insecure context).
     }
   }
 
@@ -23,17 +26,18 @@ function CodeBlock({ children }: { children?: ReactNode }) {
     <div className="relative">
       <pre
         ref={ref}
-        className="overflow-x-auto rounded-xl bg-slate-900 p-5 pr-24 text-sm text-slate-50 shadow-sm [&_code]:bg-transparent! [&_code]:p-0! [&_code]:text-inherit!"
+        tabIndex={0}
+        className="overflow-x-auto rounded-xl bg-ink p-5 pr-24 text-sm text-page shadow-sm [&_code]:bg-transparent! [&_code]:p-0! [&_code]:text-inherit!"
       >
         {children}
       </pre>
       <button
         type="button"
         onClick={copy}
-        className="absolute right-3 top-3 inline-flex items-center gap-1.5 rounded-md bg-white/10 px-2.5 py-1.5 text-xs font-semibold text-white/80 transition hover:bg-white/20 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+        className="absolute right-3 top-3 inline-flex items-center gap-1.5 rounded-md bg-white/10 px-2.5 py-1.5 text-xs font-semibold text-white/80 transition-colors hover:bg-white/20 hover:text-white focus-visible:outline-white"
       >
         {copied ? <Check size={14} /> : <Copy size={14} />}
-        {copied ? "Copied" : "Copy"}
+        <span aria-live="polite">{copied ? "Copied" : "Copy"}</span>
       </button>
     </div>
   );
@@ -44,9 +48,7 @@ const components: Components = {
   h3: ({ children }) => <h3 className="pt-1 text-lg font-bold text-ink">{children}</h3>,
   ul: ({ children }) => <ul className="list-disc space-y-1.5 pl-6">{children}</ul>,
   ol: ({ children }) => <ol className="list-decimal space-y-1.5 pl-6">{children}</ol>,
-  blockquote: ({ children }) => (
-    <blockquote className="border-l-4 border-line-strong pl-4 text-muted">{children}</blockquote>
-  ),
+  blockquote: ({ children }) => <blockquote className="border-l-4 border-line-strong pl-4 text-muted">{children}</blockquote>,
   a: ({ href, children }) => (
     <a href={href} target="_blank" rel="noopener noreferrer" className="link underline">
       {children}
@@ -54,9 +56,7 @@ const components: Components = {
   ),
   // Inline code. Inside <pre> these styles are reset by CodeBlock.
   code: ({ className, children }) => (
-    <code className={`${className ?? ""} rounded bg-line/60 px-1.5 py-0.5 text-sm font-medium text-ink`}>
-      {children}
-    </code>
+    <code className={`${className ?? ""} rounded bg-line/60 px-1.5 py-0.5 text-sm font-medium text-ink`}>{children}</code>
   ),
   pre: ({ children }) => <CodeBlock>{children}</CodeBlock>,
 };

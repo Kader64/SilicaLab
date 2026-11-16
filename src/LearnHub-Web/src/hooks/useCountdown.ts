@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 
+/** Milliseconds left until `expiresAt` (a timestamp). Calls `onExpire` once the time is up. */
 export function useCountdown(expiresAt: number, active: boolean, onExpire: () => void) {
   const [now, setNow] = useState(() => Date.now());
   const onExpireRef = useRef(onExpire);
@@ -11,27 +12,18 @@ export function useCountdown(expiresAt: number, active: boolean, onExpire: () =>
   useEffect(() => {
     if (!active || expiresAt <= 0) return;
 
-    const current = Date.now();
-    setNow(current);
-
-    const msLeft = expiresAt - current;
-    if (msLeft <= 0) {
+    const sync = () => setNow(Date.now());
+    const firstTick = setTimeout(sync, 0);
+    const tick = setInterval(sync, 1000);
+    const expire = setTimeout(() => {
+      sync();
       onExpireRef.current();
-      return;
-    }
-
-    const expireTimeout = setTimeout(() => {
-      setNow(Date.now());
-      onExpireRef.current();
-    }, msLeft);
-
-    const tickInterval = setInterval(() => {
-      setNow(Date.now());
-    }, 1000);
+    }, Math.max(0, expiresAt - Date.now()));
 
     return () => {
-      clearTimeout(expireTimeout);
-      clearInterval(tickInterval);
+      clearTimeout(firstTick);
+      clearInterval(tick);
+      clearTimeout(expire);
     };
   }, [active, expiresAt]);
 

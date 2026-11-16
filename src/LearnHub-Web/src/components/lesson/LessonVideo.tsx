@@ -1,14 +1,24 @@
-import { PlayCircle } from "lucide-react";
+import { toEmbedUrl } from "../../lib/video";
 
-/** Placeholder for the video player. Replace the button with the real embed. */
-export default function LessonVideo() {
+interface Props {
+  url: string;
+  title: string;
+}
+
+/** YouTube or Vimeo player. Renders nothing when the link can't be turned into an embed. */
+export default function LessonVideo({ url, title }: Props) {
+  const src = toEmbedUrl(url);
+  if (!src) return null;
+
   return (
-    <button
-      type="button"
-      aria-label="Play video"
-      className="group mt-6 flex aspect-video w-full items-center justify-center rounded-xl bg-slate-900 text-white/80 shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2"
-    >
-      <PlayCircle size={56} className="transition-transform group-hover:scale-110" />
-    </button>
+    <iframe
+      src={src}
+      title={`Video: ${title}`}
+      loading="lazy"
+      allow="accelerometer; encrypted-media; picture-in-picture; fullscreen"
+      allowFullScreen
+      referrerPolicy="strict-origin-when-cross-origin"
+      className="mt-6 aspect-video w-full rounded-xl bg-ink shadow-sm"
+    />
   );
 }

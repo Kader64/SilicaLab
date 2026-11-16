@@ -1,5 +1,6 @@
 import { AlertTriangle } from "lucide-react";
-import Modal from "./../Modal";
+import { pluralize } from "../../lib/format";
+import Modal from "../ui/Modal";
 
 type Props = {
   open: boolean;
@@ -8,12 +9,7 @@ type Props = {
   limit: number;
 };
 
-export default function FocusWarningDialog({
-  open,
-  onClose,
-  count,
-  limit,
-}: Props) {
+export default function FocusWarningDialog({ open, onClose, count, limit }: Props) {
   const remaining = limit - count;
 
   return (
@@ -21,21 +17,18 @@ export default function FocusWarningDialog({
       open={open}
       onClose={onClose}
       title="Warning: you left the exam page"
-      icon={
-        <AlertTriangle size={22} className="mt-0.5 shrink-0 text-warning" />
-      }
+      icon={<AlertTriangle size={22} aria-hidden="true" className="mt-0.5 shrink-0 text-warning" />}
       actions={
-        <button className="btn btn-primary" onClick={onClose}>
+        <button type="button" className="btn btn-primary" onClick={onClose}>
           Return to the exam
         </button>
       }
     >
       <p>
-        A warning has been recorded ({count} of {limit}). Reaching {limit}{" "}
-        warnings cancels the attempt and marks it as failed.
+        A warning has been recorded ({count} of {limit}). Reaching {limit} warnings cancels the attempt and marks it as failed.
       </p>
       <p className="font-semibold text-ink">
-        {remaining} {remaining === 1 ? "warning" : "warnings"} remaining.
+        {remaining} {pluralize(remaining, "warning")} remaining.
       </p>
     </Modal>
   );

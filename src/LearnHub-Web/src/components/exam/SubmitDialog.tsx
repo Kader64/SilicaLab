@@ -1,4 +1,4 @@
-import Modal from "../Modal";
+import Modal from "../ui/Modal";
 
 type Props = {
   open: boolean;
@@ -9,14 +9,7 @@ type Props = {
   onSubmit: () => void;
 };
 
-export default function SubmitDialog({
-  open,
-  onClose,
-  total,
-  unanswered,
-  onReview,
-  onSubmit,
-}: Props) {
+export default function SubmitDialog({ open, onClose, total, unanswered, onReview, onSubmit }: Props) {
   const hasGaps = unanswered > 0;
 
   return (
@@ -26,13 +19,10 @@ export default function SubmitDialog({
       title="Submit your exam?"
       actions={
         <>
-          <button
-            className="btn btn-secondary"
-            onClick={hasGaps ? onReview : onClose}
-          >
+          <button type="button" className="btn btn-secondary" onClick={hasGaps ? onReview : onClose}>
             {hasGaps ? "Review unanswered" : "Keep working"}
           </button>
-          <button className="btn btn-primary" onClick={onSubmit}>
+          <button type="button" className="btn btn-primary" onClick={onSubmit}>
             {hasGaps ? "Submit anyway" : "Submit exam"}
           </button>
         </>
@@ -40,14 +30,10 @@ export default function SubmitDialog({
     >
       {hasGaps ? (
         <p>
-          {unanswered} of {total} questions have no answer. Unanswered questions
-          are marked incorrect.
+          {unanswered} of {total} questions have no answer. Unanswered questions are marked incorrect.
         </p>
       ) : (
-        <p>
-          You answered all {total} questions. Answers can't be changed after
-          submitting.
-        </p>
+        <p>You answered all {total} questions. Answers can't be changed after submitting.</p>
       )}
     </Modal>
   );

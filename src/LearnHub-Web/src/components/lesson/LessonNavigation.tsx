@@ -1,10 +1,12 @@
-import { CheckCircle2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle2 } from "lucide-react";
 import { Link } from "react-router-dom";
-import { lessonLink, type LessonItem } from "./lessonUtils";
+import { cn } from "../../lib/cn";
+import type { Lesson } from "../../types";
+import { lessonLink } from "./lessonLink";
 
 type Props = {
-  prev?: LessonItem;
-  next?: LessonItem;
+  prev?: Lesson;
+  next?: Lesson;
   isCompleted: boolean;
   /** False once the exam is passed: lessons can't be un-completed anymore. */
   canUndo: boolean;
@@ -16,12 +18,12 @@ export default function LessonNavigation({ prev, next, isCompleted, canUndo, onC
   return (
     <div className="mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-6">
       {prev ? (
-        <Link to={lessonLink(prev.id)} className="btn btn-secondary px-5">
-          ← Previous
+        <Link to={lessonLink(prev.id)} className="btn btn-secondary">
+          <ArrowLeft size={16} /> Previous
         </Link>
       ) : (
-        <button className="btn btn-secondary px-5" disabled>
-          ← Previous
+        <button type="button" className="btn btn-secondary" disabled>
+          <ArrowLeft size={16} /> Previous
         </button>
       )}
 
@@ -29,23 +31,23 @@ export default function LessonNavigation({ prev, next, isCompleted, canUndo, onC
         {isCompleted ? (
           <>
             <span className="flex items-center gap-2 text-sm font-semibold text-success">
-              <CheckCircle2 size={18} /> Completed
+              <CheckCircle2 size={18} aria-hidden="true" /> Completed
             </span>
             {canUndo && (
-              <button className="btn btn-ghost btn-sm" onClick={onUndo}>
+              <button type="button" className="btn btn-ghost btn-sm" onClick={onUndo}>
                 Undo
               </button>
             )}
           </>
         ) : (
-          <button className="btn btn-primary px-6" onClick={onComplete}>
+          <button type="button" className="btn btn-primary" onClick={onComplete}>
             Mark as completed
           </button>
         )}
 
         {next && (
-          <Link to={lessonLink(next.id)} className={`btn px-5 ${isCompleted ? "btn-primary" : "btn-secondary"}`}>
-            Next →
+          <Link to={lessonLink(next.id)} className={cn("btn", isCompleted ? "btn-primary" : "btn-secondary")}>
+            Next <ArrowRight size={16} />
           </Link>
         )}
       </div>

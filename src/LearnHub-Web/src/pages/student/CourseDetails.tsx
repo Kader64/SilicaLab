@@ -1,109 +1,137 @@
-import { ClipboardCheck, PlayCircle } from "lucide-react";
-import { Link } from "react-router-dom";
-import { courses, lessons } from "../../examples/exampledata";
-
-const course = courses[0];
+import { BarChart3, BookOpen, ClipboardCheck, Clock, User } from "lucide-react";
+import { useState } from "react";
+import { Link, useParams } from "react-router-dom";
+import CourseCover from "../../components/course/CourseCover";
+import CourseNotFound from "../../components/course/CourseNotFound";
+import Breadcrumbs from "../../components/ui/Breadcrumbs";
+import DescriptionList from "../../components/ui/DescriptionList";
+import ProgressBar from "../../components/ui/ProgressBar";
+import { pluralize } from "../../lib/format";
+import { getCourse, lessons } from "../../mocks/data";
 
 export default function CourseDetails() {
+  const { id } = useParams();
+  const course = getCourse(id);
+  const [enrolled, setEnrolled] = useState(false);
+
+  if (!course) return <CourseNotFound />;
+
+  const done = lessons.filter((l) => l.completed).length;
+  const nextLesson = lessons.find((l) => !l.completed) ?? lessons[0];
+  const lessonPath = (lessonId: string) =>
+    `/learn/${course.id}?lesson=${lessonId}`;
+
   return (
-    <div className="grid gap-10 lg:grid-cols-3">
-      <div className="lg:col-span-2">
-        <p className="text-sm font-medium text-slate-500">
-          <Link
-            to="/courses"
-            className="transition-colors hover:text-slate-900"
-          >
-            Courses
-          </Link>
-          <span className="mx-2">/</span>
-          <span className="text-slate-900">{course.category}</span>
-        </p>
+    <div className="mx-auto max-w-6xl">
+      <Breadcrumbs
+        items={[{ label: "Courses", to: "/courses" }, { label: course.title }]}
+      />
 
-        <h1 className="mt-4 text-3xl font-extrabold text-slate-900 sm:text-4xl">
-          {course.title}
-        </h1>
-        <p className="mt-4 text-lg leading-relaxed text-slate-600">
-          {course.description}
-        </p>
+      <div className="mt-6 grid gap-8 lg:grid-cols-[1fr_22rem]">
+        <div className="min-w-0">
+          <h1 className="page-title">{course.title}</h1>
+          <p className="mt-3 text-lg leading-relaxed text-body">
+            {course.description}
+          </p>
 
-        <p className="mt-5 flex items-center gap-2 text-sm text-slate-500">
-          Created by{" "}
-          <span className="font-semibold text-slate-900">{course.teacher}</span>
-          <span>·</span>
-          {course.level}
-          <span>·</span>
-          {course.lessons} lessons
-        </p>
-
-        <h2 className="mt-12 text-xl font-bold text-slate-900">
-          Course Content
-        </h2>
-
-        {/* Adjusted dividers: divide-slate-200 and border-slate-200 create clean, visible lines between items */}
-        <ol className="mt-4 divide-y divide-slate-200 border-y border-slate-200">
-          {lessons.map((lesson) => (
-            <li
-              key={lesson.id}
-              className="group flex items-center gap-4 py-4 transition-colors hover:bg-slate-50"
-            >
-              <span className="w-6 text-sm font-medium tabular-nums text-slate-400">
-                {lesson.order}
-              </span>
-
-              <span className="flex-1 font-medium text-slate-800">
-                {lesson.title}
-              </span>
-              <span className="text-xs font-medium text-slate-500">10 min</span>
+          <ul className="mt-5 flex flex-wrap gap-x-6 gap-y-2 text-sm font-medium text-muted">
+            <li className="flex items-center gap-2">
+              <User size={16} aria-hidden="true" /> {course.teacher}
             </li>
-          ))}
+            <li className="flex items-center gap-2">
+              <BarChart3 size={16} aria-hidden="true" /> {course.level}
+            </li>
+            <li className="flex items-center gap-2">
+              <BookOpen size={16} aria-hidden="true" /> {course.lessons}{" "}
+              {pluralize(course.lessons, "lesson")}
+            </li>
+          </ul>
 
-          {/* Final exam row naturally inherits the top divider from the divide-y utility */}
-          <li className="flex items-center gap-4 py-4">
-            <span className="w-6" />
-            <ClipboardCheck size={16} className="text-slate-400" />
-            <span className="flex-1 font-bold text-slate-900">Final exam</span>
-            <span className="text-xs font-medium text-slate-500">
-              Unlocks after all lessons
-            </span>
-          </li>
-        </ol>
-      </div>
-
-      <aside className="lg:sticky lg:top-24 lg:self-start">
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h2 className="text-lg font-bold text-slate-900">Final exam</h2>
-          <dl className="mt-4 divide-y divide-slate-100 text-sm">
-            <div className="flex justify-between py-3">
-              <dt className="text-slate-500">Pass mark</dt>
-              <dd className="font-semibold text-slate-900">70%</dd>
-            </div>
-            <div className="flex justify-between py-3">
-              <dt className="text-slate-500">Attempts</dt>
-              <dd className="font-semibold text-slate-900">Unlimited</dd>
-            </div>
-            <div className="flex justify-between py-3">
-              <dt className="text-slate-500">Time limit</dt>
-              <dd className="font-semibold text-slate-900">30 min</dd>
-            </div>
-          </dl>
-
-          {/* VARIANT A (student is NOT enrolled) */}
-          <button className="btn btn-primary mt-6 w-full py-2.5 text-center font-semibold">
-            Enroll in this course
-          </button>
-
-          {/* VARIANT B (student IS enrolled). Replace variant A with this:
-          <div className="mt-6">
-            <div className="mb-2 flex justify-between text-sm">
-              <span className="font-semibold text-success">Enrolled</span>
-              <span className="text-slate-500">40% done</span>
-            </div>
-            <div className="progress"><div className="progress-bar w-2/5" /></div>
-            <Link to="/learn/c1" className="btn btn-primary mt-4 block w-full py-2.5 text-center font-semibold">Continue learning</Link>
-          </div>
-          */}
+          <h2 className="section-title mt-10">Course content</h2>
+          <ol className="card mt-4 divide-y divide-line">
+            {lessons.map((lesson) => (
+              <li key={lesson.id} className="flex items-center gap-4 px-5 py-4">
+                <span className="w-6 text-sm font-semibold tabular-nums text-muted">
+                  {lesson.order}
+                </span>
+                <span className="flex-1 font-semibold text-ink">
+                  {enrolled ? (
+                    <Link
+                      to={lessonPath(lesson.id)}
+                      className="hover:text-accent-dark"
+                    >
+                      {lesson.title}
+                    </Link>
+                  ) : (
+                    lesson.title
+                  )}
+                </span>
+                <span className="flex items-center gap-1.5 text-sm text-muted">
+                  <Clock size={14} aria-hidden="true" /> {lesson.duration}
+                </span>
+              </li>
+            ))}
+            <li className="flex items-center gap-4 bg-page px-5 py-4">
+              <ClipboardCheck
+                size={18}
+                aria-hidden="true"
+                className="ml-1 text-accent-dark"
+              />
+              <span className="flex-1 font-semibold text-ink">Final exam</span>
+              <span className="text-sm text-muted">
+                Unlocks after all lessons
+              </span>
+            </li>
+          </ol>
         </div>
-      </aside>
+
+        <aside className="lg:sticky lg:top-[calc(var(--header-h)+1.5rem)] lg:self-start">
+          <div className="card-feature p-6">
+            {/* Variants: not enrolled (Enroll button) and enrolled (progress and Continue button) */}
+            {enrolled ? (
+              <>
+                <p className="eyebrow">Your progress</p>
+                <div className="mt-3">
+                  <ProgressBar
+                    done={done}
+                    total={lessons.length}
+                    valueLabel={`${Math.round((done / lessons.length) * 100)}%`}
+                  />
+                </div>
+                <Link
+                  to={lessonPath(nextLesson.id)}
+                  className="btn btn-primary mt-5 w-full"
+                >
+                  Continue learning
+                </Link>
+              </>
+            ) : (
+              <>
+                <p className="text-2xl font-extrabold text-ink">Free</p>
+                <p className="mt-1 text-sm text-muted">
+                  Includes certificate upon passing the exam.
+                </p>
+                {/* TODO API: POST /api/courses/{id}/enroll */}
+                <DescriptionList
+                  className="mt-4"
+                  items={[
+                    { label: "Students", value: course.students },
+                    { label: "Category", value: course.category },
+                    { label: "Level", value: course.level },
+                  ]}
+                />
+                <button
+                  type="button"
+                  className="btn btn-primary mt-5 w-full"
+                  onClick={() => setEnrolled(true)}
+                >
+                  Enroll in this course
+                </button>
+              </>
+            )}
+          </div>
+        </aside>
+      </div>
     </div>
   );
 }

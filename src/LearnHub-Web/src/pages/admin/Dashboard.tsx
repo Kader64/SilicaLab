@@ -1,87 +1,87 @@
 import { Link } from "react-router-dom";
-import PageHeader from "../../components/PageHeader";
-import StatCard from "../../components/StatCard";
-import StatusBadge from "../../components/StatusBadge";
-import { auditLog } from "../../examples/exampledata";
-
-// EXAMPLE: counts (GET /api/admin/dashboard)
-const coursesByStatus = [
-  { status: "Published", value: 98 },
-  { status: "Draft", value: 27 },
-  { status: "Unpublished", value: 12 },
-  { status: "Suspended", value: 5 },
-];
-const usersByRole = [
-  { label: "Students", value: 1204 },
-  { label: "Teachers", value: 86 },
-  { label: "Admins", value: 1 },
-];
-
-// "CourseSuspended" -> "Course suspended"
-const readable = (action: string) => action.replace(/([a-z])([A-Z])/g, "$1 $2").replace(/^./, (c) => c.toUpperCase()).replace(/ ([A-Z])/g, (m) => m.toLowerCase());
+import PageHeader from "../../components/ui/PageHeader";
+import StatCard from "../../components/ui/StatCard";
+import StatusBadge from "../../components/ui/StatusBadge";
+import { formatAction } from "../../lib/format";
+import {
+  auditLog,
+  coursesByStatus,
+  dashboardStats,
+  usersByRole,
+} from "../../mocks/data";
 
 export default function Dashboard() {
+  // TODO API: GET /api/admin/stats
   return (
     <>
-      <PageHeader title="Dashboard" description="What is on the platform and what admins did lately." />
+      <PageHeader title="Dashboard" description="Platform overview." />
 
-      <div className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-line bg-line lg:grid-cols-4">
-        <StatCard label="Users" value="1,291" to="/admin/users" />
-        <StatCard label="Courses" value="142" to="/admin/courses" />
-        <StatCard label="Enrollments" value="5,380" to="/admin/courses" />
-        <StatCard label="Certificates issued" value="2,117" to="/admin/certificates" />
+      <div className="card mb-8 grid gap-px overflow-hidden bg-line sm:grid-cols-2 xl:grid-cols-4">
+        {dashboardStats.map((stat) => (
+          <StatCard key={stat.label} {...stat} />
+        ))}
       </div>
 
-      <div className="mt-10 grid gap-10 lg:grid-cols-3">
-        {/* Latest audit log entries */}
-        <section className="lg:col-span-2">
-          <div className="flex items-baseline justify-between">
-            <h2 className="section-title">Recent activity</h2>
-            <Link to="/admin/audit" className="link text-sm">View all</Link>
-          </div>
-          <ul className="mt-4 divide-y divide-line border-y border-line">
-            {auditLog.slice(0, 5).map((e) => (
-              <li key={e.id} className="flex items-start justify-between gap-4 py-3.5">
-                <div className="min-w-0">
-                  <p className="font-semibold text-ink">{readable(e.action)}</p>
-                  <p className="text-sm text-muted">
-                    {e.target}
-                    {e.details !== "-" && ` · ${e.details}`}
-                  </p>
-                </div>
-                <p className="shrink-0 text-xs text-muted">{e.time}</p>
+      <div className="mb-8 grid gap-6 lg:grid-cols-2">
+        <section className="card p-5">
+          <h2 className="font-bold text-ink">Courses by status</h2>
+          <ul className="mt-4 divide-y divide-line">
+            {coursesByStatus.map(({ status, value }) => (
+              <li
+                key={status}
+                className="flex items-center justify-between py-2.5"
+              >
+                <StatusBadge status={status} />
+                <span className="font-semibold tabular-nums text-ink">
+                  {value}
+                </span>
               </li>
             ))}
           </ul>
         </section>
 
-        {/* Breakdowns */}
-        <div className="space-y-10">
-          <section>
-            <h2 className="section-title">Courses</h2>
-            <ul className="mt-4 divide-y divide-line border-y border-line">
-              {coursesByStatus.map((r) => (
-                <li key={r.status} className="flex items-center justify-between py-3">
-                  <StatusBadge status={r.status} />
-                  <span className="font-semibold tabular-nums text-ink">{r.value}</span>
-                </li>
-              ))}
-            </ul>
-          </section>
-
-          <section>
-            <h2 className="section-title">Users</h2>
-            <ul className="mt-4 divide-y divide-line border-y border-line">
-              {usersByRole.map((r) => (
-                <li key={r.label} className="flex items-center justify-between py-3 text-sm">
-                  <span>{r.label}</span>
-                  <span className="font-semibold tabular-nums text-ink">{r.value}</span>
-                </li>
-              ))}
-            </ul>
-          </section>
-        </div>
+        <section className="card p-5">
+          <h2 className="font-bold text-ink">Users by role</h2>
+          <ul className="mt-4 divide-y divide-line">
+            {usersByRole.map(({ label, value }) => (
+              <li
+                key={label}
+                className="flex items-center justify-between py-2.5 text-sm"
+              >
+                <span className="text-body">{label}</span>
+                <span className="font-semibold tabular-nums text-ink">
+                  {value.toLocaleString("en")}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
       </div>
+
+      <section className="card p-5">
+        <div className="flex items-center justify-between">
+          <h2 className="font-bold text-ink">Recent activity</h2>
+          <Link to="/admin/audit" className="link text-sm">
+            View audit log
+          </Link>
+        </div>
+        <ul className="mt-4 divide-y divide-line">
+          {auditLog.slice(0, 4).map((entry) => (
+            <li
+              key={entry.id}
+              className="flex flex-wrap items-baseline justify-between gap-x-4 py-3 text-sm"
+            >
+              <span>
+                <span className="font-semibold text-ink">
+                  {formatAction(entry.action)}
+                </span>
+                <span className="text-muted"> · {entry.target}</span>
+              </span>
+              <span className="text-xs text-muted">{entry.time}</span>
+            </li>
+          ))}
+        </ul>
+      </section>
     </>
   );
 }

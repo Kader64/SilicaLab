@@ -1,16 +1,12 @@
-// The student never receives the correct answer, so this type has no `correct` field.
-export interface StudentQuestion {
-  id: string;
-  text: string;
-  answers: string[];
-}
+import { cn } from "../../lib/cn";
+import type { StudentQuestion } from "../../types";
 
 type Props = {
   question: StudentQuestion;
   index: number;
   total: number;
   selected?: number;
-  /** Highlight the card as unanswered (after a review request). */
+  /** Highlights the card as unanswered (after a review request). */
   missing: boolean;
   onSelect: (answerIndex: number) => void;
 };
@@ -19,11 +15,11 @@ export default function QuestionCard({ question, index, total, selected, missing
   return (
     <li
       id={`question-${question.id}`}
-      className={`rounded-2xl border bg-white p-5 sm:p-6 ${missing ? "border-danger" : "border-line"}`}
+      className={cn("card-feature p-5 shadow-none sm:p-6", missing && "border-danger")}
     >
-      <fieldset>
+      <fieldset aria-describedby={missing ? `missing-${question.id}` : undefined}>
         <legend className="w-full">
-          <span className="block text-xs font-semibold uppercase tracking-wider text-muted">
+          <span className="eyebrow block">
             Question {index + 1} of {total}
           </span>
           <span className="mt-1.5 block text-base font-bold leading-snug text-ink sm:text-lg">{question.text}</span>
@@ -33,7 +29,7 @@ export default function QuestionCard({ question, index, total, selected, missing
           {question.answers.map((answer, i) => (
             <label
               key={`${question.id}-${i}`}
-              className="flex cursor-pointer items-center gap-3 rounded-xl border border-line px-4 py-3 text-sm transition-colors hover:bg-page has-checked:border-accent has-checked:bg-accent-soft has-checked:font-semibold has-checked:text-accent-dark has-focus-visible:ring-2 has-focus-visible:ring-accent/40"
+              className="flex cursor-pointer items-center gap-3 rounded-xl border border-line px-4 py-3 text-sm transition-colors hover:bg-page has-checked:border-accent has-checked:bg-accent-soft has-checked:font-semibold has-checked:text-accent-dark has-focus-visible:ring-2 has-focus-visible:ring-accent"
             >
               <input
                 type="radio"
@@ -47,7 +43,11 @@ export default function QuestionCard({ question, index, total, selected, missing
             </label>
           ))}
         </div>
-        {missing && <p className="mt-3 text-sm font-semibold text-danger">Choose an answer.</p>}
+        {missing && (
+          <p id={`missing-${question.id}`} className="field-error mt-3 font-semibold">
+            Choose an answer.
+          </p>
+        )}
       </fieldset>
     </li>
   );
