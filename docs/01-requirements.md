@@ -1,9 +1,9 @@
-# LearnHub: Requirements
+# SilicaLab: Requirements
 
 Status: Draft (in progress)
 
 ## 1. Overview
-LearnHub is a platform where teachers publish courses, students learn from them,
+SilicaLab is a platform where teachers publish courses, students learn from them,
 pass an exam, and receive a certificate.
 
 ## 2. Roles

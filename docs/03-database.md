@@ -1,4 +1,4 @@
-# LearnHub: Database design
+# SilicaLab: Database design
 
 Status: Draft
 Database: PostgreSQL

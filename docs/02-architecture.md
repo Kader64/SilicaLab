@@ -1,4 +1,4 @@
-# LearnHub: Architecture
+# SilicaLab: Architecture
 
 Status: Draft
 
@@ -33,7 +33,7 @@ Configuration comes from environment variables (`.env` locally, never committed)
 
 ## 4. Backend
 
-### 4.1 Layers (single project, `LearnHub.Api`)
+### 4.1 Layers (single project, `SilicaLab.Api`)
 
 ```
 HTTP request
@@ -46,7 +46,7 @@ HTTP request
 ### 4.2 Folder layout
 
 ```
-LearnHub.Api/
+SilicaLab.Api/
 ├── Controllers/
 ├── Services/          # grouped by feature once it grows: Services/Courses/...
 ├── Entities/
