@@ -1,4 +1,4 @@
-# LearnHub
+# SilicaLab
 
 A learning platform where **teachers** publish courses, **students** learn from them, pass an exam, and receive a **verifiable certificate**.
 
