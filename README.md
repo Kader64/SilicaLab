@@ -1,4 +1,4 @@
-# LearnHub
+# SilicaLab
 
 A learning platform where **teachers** publish courses, **students** learn from them, pass an exam, and receive a **verifiable certificate**.
 
@@ -28,8 +28,8 @@ A learning platform where **teachers** publish courses, **students** learn from 
 learnhub/
 ├── docs/               # Requirements, architecture, ADRs
 ├── src/
-│   ├── LearnHub.Api/   # ASP.NET Core API
-│   └── learnhub-web/   # React app
+│   ├── SilicaLab.Api/   # ASP.NET Core API
+│   └── SilicaLab.Web/   # React app
 ├── docker/             # Dockerfiles
 ├── docker-compose.yml        # Development: PostgreSQL only
 └── docker-compose.prod.yml   # Full stack: db + api + web
