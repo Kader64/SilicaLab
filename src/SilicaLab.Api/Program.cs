@@ -5,6 +5,7 @@ using SilicaLab.Api.Data.Entities;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.AspNetCore.Authorization;
+using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -52,22 +53,33 @@ builder.Services.AddAuthorizationBuilder()
     .AddPolicy(Policies.AdminOnly, p => p.RequireRole(Roles.Admin))
     .SetFallbackPolicy(new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build()); // By default all endpoint require auth (even without [Authorize])
 
-
-
+// Other
 builder.Services.AddControllers();
+builder.Services.AddProblemDetails();
 builder.Services.AddOpenApi();
+builder.Services.AddHealthChecks().AddDbContextCheck<AppDbContext>();
+
+// Services
+builder.Services.AddScoped<AuthService>();
+
 
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    app.MapOpenApi().AllowAnonymous();
+    app.MapScalarApiReference().AllowAnonymous();
 }
-
-app.UseHttpsRedirection();
-
+// ADD Middleware for errors
+app.UseStatusCodePages();
+// Add rate limiter
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHealthChecks("/health").AllowAnonymous();
+
+
+
+// SEED DB for development?
 app.Run();
