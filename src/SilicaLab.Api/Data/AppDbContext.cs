@@ -6,5 +6,5 @@ namespace SilicaLab.Api.Data;
 
 public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbContext<AppUser, AppRole, Guid>(options)
 {
-    // TODO add DbSet and Entities
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 }

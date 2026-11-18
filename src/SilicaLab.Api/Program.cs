@@ -6,8 +6,16 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.AspNetCore.Authorization;
 using Scalar.AspNetCore;
+using SilicaLab.Api.Services;
+using SilicaLab.Api.Common;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Load config to JWtOptions
+builder.Services.AddOptions<JwtOptions>()
+    .Bind(builder.Configuration.GetSection(JwtOptions.Section))
+    .Validate(o => o.Key.Length >= 32, "Jwt:Key must be at least 32 characters.")
+    .ValidateOnStart();
 
 // Database
 builder.Services.AddDbContext<AppDbContext>(options => options
@@ -40,7 +48,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidAudience = builder.Configuration["Jwt:Audience"],
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:SecretKey"]!)),
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!)),
             ClockSkew = TimeSpan.Zero,
             NameClaimType = "name",
             RoleClaimType = "role",
@@ -61,6 +69,7 @@ builder.Services.AddHealthChecks().AddDbContextCheck<AppDbContext>();
 
 // Services
 builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<TokenService>();
 
 
 var app = builder.Build();
