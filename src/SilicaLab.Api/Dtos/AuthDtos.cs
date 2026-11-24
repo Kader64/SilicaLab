@@ -1,6 +1,25 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace SilicaLab.Api.Dtos;
 
 public record UserDto(Guid Id, string FullName, string Email, string Role);
 
-public record RegisterRequest(string FullName, string Email, string Password, string Role);
-public record RegisterResponse(string AccessToken, int ExpiresInSeconds, UserDto User);
+public record RegisterRequest(
+    [Required(ErrorMessage = "Full name is required.")]
+    [MaxLength(200, ErrorMessage = "Full name must not exceed 200 characters.")]
+    string FullName,
+
+    [Required(ErrorMessage = "Email is required.")]
+    [MaxLength(256, ErrorMessage = "Email must not exceed 256 characters.")]
+    [EmailAddress(ErrorMessage = "A valid email address is required.")]
+    string Email,
+
+    [Required(ErrorMessage = "Password is required.")]
+    [MinLength(8, ErrorMessage = "Password must be at least 8 characters.")]
+    [MaxLength(128, ErrorMessage = "Password must not exceed 128 characters.")]
+    string Password,
+
+    [Required(ErrorMessage = "Role is required.")]
+    [RegularExpression("^(Student|Teacher)$", ErrorMessage = "Role must be either Student or Teacher.")]
+    string Role
+);

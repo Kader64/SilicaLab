@@ -1,4 +1,4 @@
-# ADR-007: Result Pattern (`Result<T>` and `AppError`) for Domain Error Handling
+# ADR-005: Result Pattern (`Result<T>` and `AppError`) for Domain Error Handling
 
 Status: Accepted
 
