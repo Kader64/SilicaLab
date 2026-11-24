@@ -3,7 +3,7 @@
 Status: Accepted
 
 ## Context
-LearnHub is a SPA (React) talking to a stateless .NET API. Users should stay
+SilicaLab is a SPA (React) talking to a stateless .NET API. Users should stay
 signed in for days without keeping long-lived credentials exposed.
 
 ## Decision

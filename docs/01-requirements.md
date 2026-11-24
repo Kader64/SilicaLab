@@ -1,6 +1,6 @@
 # SilicaLab: Requirements
 
-Status: Draft (in progress)
+Status: Draft
 
 ## 1. Overview
 SilicaLab is a platform where teachers publish courses, students learn from them,
@@ -21,7 +21,7 @@ Rules:
   (e.g. "CanEnroll" allows Student and Teacher), not with multiple roles.
 
 ## 3. Authentication
-- ASP.NET Core Identity + JWT (see ADR-001)
+- ASP.NET Core + JWT (see ADR-001)
 - Short-lived access token + rotating refresh token (see ADR-002).
 
 ## 4. Main user flow
@@ -95,7 +95,7 @@ Exam
 
 | Setting | Value |
 |---------|-------|
-| Pass mark | 70% by default, set per exam by the teacher (range 50-100%) |
+| Pass mark | 70% by default, set per exam by the teacher (range 0-100%) |
 | Max attempts | Set per exam by the teacher. Default: **unlimited** |
 | Time limit | Optional, per exam, enforced on the server |
 | Question order | Shuffled per attempt (answers shuffled too) |

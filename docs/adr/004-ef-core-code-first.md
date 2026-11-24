@@ -13,6 +13,5 @@ The database is designed from scratch together with the API.
 
 ## Consequences
 + Schema history is versioned with the code, and a fresh database is one command away.
-+ Works naturally with Identity.
 - Some PostgreSQL features (partial indexes, check constraints) need explicit configuration.
 - Production migration needs a deliberate step (migration bundle), not auto-migrate.
