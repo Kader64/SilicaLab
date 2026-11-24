@@ -11,7 +11,7 @@ A learning platform where **teachers** publish courses, **students** learn from 
 - **Learning:** enrollment and lesson progress tracking
 - **Exams:** single-choice questions, server-side grading, retry with cooldown
 - **Certificates:** PDF with a unique verification code
-- **Auth:** ASP.NET Core Identity, JWT access token + rotating refresh token
+- **Auth:** ASP.NET Core, JWT access token + rotating refresh token
 
 ## Tech stack
 
