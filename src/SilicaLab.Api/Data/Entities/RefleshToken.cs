@@ -8,9 +8,7 @@ public class RefreshToken
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
     public DateTimeOffset ExpiresAt { get; set; }
     public DateTimeOffset? RevokedAt { get; set; }
-    public Guid? ReplacedByTokenId { get; set; }
 
     // Navigation properties
     public AppUser User { get; set; } = null!;
-    public RefreshToken? ReplacedByToken { get; set; }
 }

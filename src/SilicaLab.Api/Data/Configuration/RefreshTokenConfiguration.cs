@@ -30,8 +30,6 @@ public class RefreshTokenConfiguration : IEntityTypeConfiguration<RefreshToken>
 
         builder.Property(rt => rt.RevokedAt);
 
-        builder.Property(rt => rt.ReplacedByTokenId);
-
         // Indexes
         builder.HasIndex(rt => rt.TokenHash)
             .IsUnique();
@@ -43,11 +41,5 @@ public class RefreshTokenConfiguration : IEntityTypeConfiguration<RefreshToken>
             .WithMany() // Or .WithMany(u => u.RefreshTokens) if you add the collection to AppUser
             .HasForeignKey(rt => rt.UserId)
             .OnDelete(DeleteBehavior.Cascade);
-
-        // Self-referencing rotation chain (optional FK constraint)
-        builder.HasOne(rt => rt.ReplacedByToken)
-            .WithOne()
-            .HasForeignKey<RefreshToken>(rt => rt.ReplacedByTokenId)
-            .OnDelete(DeleteBehavior.SetNull);
     }
 }

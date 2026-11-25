@@ -9,7 +9,6 @@ SilicaLab needs registration, login, password handling, account lockout, and rol
 - Model a custom `AppUser` entity stored in a single `Users` table, with a `UserRole` enum column (`Student`, `Teacher`, `Admin`) stored as a string.
 - Use ASP.NET Core's standalone `IPasswordHasher<AppUser>` (`PasswordHasher<AppUser>`, PBKDF2-HMAC-SHA512) for cryptographic password hashing.
 - Handle account lockout explicitly on `AppUser` via `FailedLoginAttempts` and `LockoutEnd` (5 failed attempts triggers a 5-minute lockout).
-- Validate password strength and registration rules via FluentValidation (`RegisterRequestValidator`).
 - Issue JWT access tokens from our own `TokenService` and authorize endpoints using standard ASP.NET Core JWT Bearer authentication with role-based policies (`CanLearn`, `CanTeach`, `AdminOnly`).
 - Seed the initial `Admin` account on startup from environment variables.
 

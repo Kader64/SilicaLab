@@ -36,7 +36,6 @@ public class TokenService(IOptions<JwtOptions> jwtOptions) : ITokenService
             new("role", user.Role.ToString()),
             new(JwtRegisteredClaimNames.Jti, Guid.CreateVersion7().ToString())
         };
-
         var expires = DateTime.UtcNow.AddMinutes(_jwt.AccessTokenMinutes);
 
         var token = new JwtSecurityToken(
@@ -52,13 +51,12 @@ public class TokenService(IOptions<JwtOptions> jwtOptions) : ITokenService
 
     public RefreshTokenResult GenerateRefreshToken()
     {
-        var rawToken = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
+        var rawToken = Base64UrlEncoder.Encode(RandomNumberGenerator.GetBytes(32));
         var tokenHash = HashToken(rawToken);
         var expiresAt = DateTimeOffset.UtcNow.AddDays(_jwt.RefreshTokenDays);
 
         return new RefreshTokenResult(rawToken, tokenHash, expiresAt);
     }
-
     public string HashToken(string rawToken)
     {
         var hashBytes = SHA256.HashData(Encoding.UTF8.GetBytes(rawToken));

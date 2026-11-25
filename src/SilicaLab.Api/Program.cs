@@ -57,7 +57,7 @@ builder.Services.AddProblemDetails(); // For description in built-in error bodie
 builder.Services.AddScoped<IPasswordHasher<AppUser>, PasswordHasher<AppUser>>();
 builder.Services.AddSingleton<ITokenService, TokenService>(); // Provides JWT token for auth
 builder.Services.AddScoped<IAuthService, AuthService>();
-
+builder.Services.AddHostedService<TokenCleanupService>();
 
 
 builder.Services.AddControllers();
@@ -71,7 +71,7 @@ if (app.Environment.IsDevelopment())
     app.MapScalarApiReference().AllowAnonymous();
 
     // Auto migrate DB on development
-    using var scope = app.Services.CreateScope();
+    await using var scope = app.Services.CreateAsyncScope();
     var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     await dbContext.Database.MigrateAsync();
 
@@ -81,6 +81,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseStatusCodePages();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

@@ -42,8 +42,8 @@ namespace SilicaLab.Api.Data.Migrations
 
                     b.Property<string>("FullName")
                         .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
                     b.Property<bool>("IsActive")
                         .ValueGeneratedOnAdd()
@@ -83,9 +83,6 @@ namespace SilicaLab.Api.Data.Migrations
                     b.Property<DateTimeOffset>("ExpiresAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<Guid?>("ReplacedByTokenId")
-                        .HasColumnType("uuid");
-
                     b.Property<DateTimeOffset?>("RevokedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -99,9 +96,6 @@ namespace SilicaLab.Api.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ReplacedByTokenId")
-                        .IsUnique();
-
                     b.HasIndex("TokenHash")
                         .IsUnique();
 
@@ -112,18 +106,11 @@ namespace SilicaLab.Api.Data.Migrations
 
             modelBuilder.Entity("SilicaLab.Api.Data.Entities.RefreshToken", b =>
                 {
-                    b.HasOne("SilicaLab.Api.Data.Entities.RefreshToken", "ReplacedByToken")
-                        .WithOne()
-                        .HasForeignKey("SilicaLab.Api.Data.Entities.RefreshToken", "ReplacedByTokenId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
                     b.HasOne("SilicaLab.Api.Data.Entities.AppUser", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("ReplacedByToken");
 
                     b.Navigation("User");
                 });

@@ -13,6 +13,7 @@ public interface IAuthService
     Task<ErrorOr<AuthSessionResult>> LoginAsync(LoginRequest request);
     Task<ErrorOr<AuthSessionResult>> RefreshAsync(string rawRefreshToken);
     Task<ErrorOr<Success>> LogoutAsync(string? rawRefreshToken);
+    Task<ErrorOr<Success>> LogoutAllAsync(Guid userId);
     Task<ErrorOr<UserDto>> GetCurrentUserAsync(Guid userId);
 }
 
@@ -22,11 +23,14 @@ public class AuthService(
     ITokenService tokenService) : IAuthService
 {
     private const int MaxFailedAttempts = 5;
+    private const int MaxActiveSessions = 3;
     private static readonly TimeSpan LockoutDuration = TimeSpan.FromMinutes(5);
+
+    private static readonly string DummyPasswordHash = new PasswordHasher<AppUser>().HashPassword(new AppUser(), "DummyPassword#123!");
 
     public async Task<ErrorOr<AuthSessionResult>> RegisterAsync(RegisterRequest request)
     {
-        var email = request.Email.Trim();
+        var email = request.Email.Trim().ToLowerInvariant();
         var emailExists = await dbContext.Users.AnyAsync(u => u.Email == email);
 
         if (emailExists)
@@ -47,39 +51,22 @@ public class AuthService(
 
         user.PasswordHash = passwordHasher.HashPassword(user, request.Password);
         dbContext.Users.Add(user);
+
         var session = IssueSessionTokens(user);
         await dbContext.SaveChangesAsync();
         return session;
     }
 
-    private AuthSessionResult IssueSessionTokens(AppUser user)
-    {
-        var now = DateTimeOffset.UtcNow;
-        var accessToken = tokenService.GenerateAccessToken(user);
-        var refreshToken = tokenService.GenerateRefreshToken();
-
-        dbContext.RefreshTokens.Add(new RefreshToken
-        {
-            Id = Guid.CreateVersion7(),
-            UserId = user.Id,
-            TokenHash = refreshToken.TokenHash,
-            ExpiresAt = refreshToken.ExpiresAt,
-            CreatedAt = now
-        });
-
-        var response = new AuthResponse(accessToken.Token, accessToken.ExpiresInSeconds, MapToUserDto(user));
-        return new AuthSessionResult(response, refreshToken.RawToken, refreshToken.ExpiresAt);
-    }
     public async Task<ErrorOr<AuthSessionResult>> LoginAsync(LoginRequest request)
     {
         var email = request.Email.Trim().ToLowerInvariant();
         var user = await dbContext.Users.FirstOrDefaultAsync(u => u.Email == email);
 
         if (user is null)
+        {
+            passwordHasher.VerifyHashedPassword(new AppUser(), DummyPasswordHash, request.Password);
             return Error.Unauthorized("Auth.InvalidCredentials", "Invalid email or password.");
-
-        if (!user.IsActive)
-            return Error.Forbidden("Auth.AccountDisabled", "Your account has been disabled.");
+        }
 
         var now = DateTimeOffset.UtcNow;
 
@@ -104,11 +91,16 @@ public class AuthService(
             return Error.Unauthorized("Auth.InvalidCredentials", "Invalid email or password.");
         }
 
+        if (!user.IsActive)
+            return Error.Forbidden("Auth.AccountDisabled", "Your account has been disabled.");
+
         if (verifyResult == PasswordVerificationResult.SuccessRehashNeeded)
             user.PasswordHash = passwordHasher.HashPassword(user, request.Password);
 
         user.FailedLoginAttempts = 0;
         user.LockoutEnd = null;
+
+        await EnforceSessionLimitAsync(user.Id, now);
 
         var session = IssueSessionTokens(user);
         await dbContext.SaveChangesAsync();
@@ -122,48 +114,23 @@ public class AuthService(
             return Error.Unauthorized("Auth.MissingRefreshToken", "Refresh token is required.");
 
         var tokenHash = tokenService.HashToken(rawRefreshToken);
+        var now = DateTimeOffset.UtcNow;
+
         var existingToken = await dbContext.RefreshTokens
+            .AsNoTracking()
             .Include(rt => rt.User)
             .FirstOrDefaultAsync(rt => rt.TokenHash == tokenHash);
 
-        if (existingToken is null)
-            return Error.Unauthorized("Auth.InvalidRefreshToken", "Invalid refresh token.");
-
-        var now = DateTimeOffset.UtcNow;
-
-        if (existingToken.RevokedAt is not null)
-        {
-            await RevokeAllUserTokensAsync(existingToken.UserId, now);
-            await dbContext.SaveChangesAsync();
-            return Error.Unauthorized("Auth.TokenReuseDetected", "Refresh token has already been used.");
-        }
-
-        if (existingToken.ExpiresAt <= now)
-            return Error.Unauthorized("Auth.RefreshTokenExpired", "Refresh token has expired.");
+        if (existingToken is null || existingToken.RevokedAt is not null || existingToken.ExpiresAt <= now)
+            return Error.Unauthorized("Auth.InvalidRefreshToken", "Session is invalid or has expired.");
 
         if (!existingToken.User.IsActive)
             return Error.Forbidden("Auth.AccountDisabled", "Your account has been disabled.");
 
-        var newRefresh = tokenService.GenerateRefreshToken();
-        var newRefreshEntity = new RefreshToken
-        {
-            Id = Guid.CreateVersion7(),
-            UserId = existingToken.UserId,
-            TokenHash = newRefresh.TokenHash,
-            ExpiresAt = newRefresh.ExpiresAt,
-            CreatedAt = now
-        };
-
-        existingToken.RevokedAt = now;
-        existingToken.ReplacedByTokenId = newRefreshEntity.Id;
-
-        dbContext.RefreshTokens.Add(newRefreshEntity);
-
         var accessToken = tokenService.GenerateAccessToken(existingToken.User);
-        await dbContext.SaveChangesAsync();
-
         var response = new AuthResponse(accessToken.Token, accessToken.ExpiresInSeconds, MapToUserDto(existingToken.User));
-        return new AuthSessionResult(response, newRefresh.RawToken, newRefresh.ExpiresAt);
+
+        return new AuthSessionResult(response, rawRefreshToken, existingToken.ExpiresAt);
     }
 
     public async Task<ErrorOr<Success>> LogoutAsync(string? rawRefreshToken)
@@ -175,6 +142,15 @@ public class AuthService(
 
         await dbContext.RefreshTokens
             .Where(rt => rt.TokenHash == tokenHash && rt.RevokedAt == null)
+            .ExecuteUpdateAsync(s => s.SetProperty(rt => rt.RevokedAt, DateTimeOffset.UtcNow));
+
+        return Result.Success;
+    }
+
+    public async Task<ErrorOr<Success>> LogoutAllAsync(Guid userId)
+    {
+        await dbContext.RefreshTokens
+            .Where(rt => rt.UserId == userId && rt.RevokedAt == null)
             .ExecuteUpdateAsync(s => s.SetProperty(rt => rt.RevokedAt, DateTimeOffset.UtcNow));
 
         return Result.Success;
@@ -192,14 +168,38 @@ public class AuthService(
         return MapToUserDto(user);
     }
 
-    private async Task RevokeAllUserTokensAsync(Guid userId, DateTimeOffset now)
+    private AuthSessionResult IssueSessionTokens(AppUser user)
+    {
+        var now = DateTimeOffset.UtcNow;
+        var accessToken = tokenService.GenerateAccessToken(user);
+        var refreshToken = tokenService.GenerateRefreshToken();
+
+        dbContext.RefreshTokens.Add(new RefreshToken
+        {
+            Id = Guid.CreateVersion7(),
+            UserId = user.Id,
+            TokenHash = refreshToken.TokenHash,
+            ExpiresAt = refreshToken.ExpiresAt,
+            CreatedAt = now
+        });
+
+        var response = new AuthResponse(accessToken.Token, accessToken.ExpiresInSeconds, MapToUserDto(user));
+        return new AuthSessionResult(response, refreshToken.RawToken, refreshToken.ExpiresAt);
+    }
+
+    private async Task EnforceSessionLimitAsync(Guid userId, DateTimeOffset now)
     {
         var activeTokens = await dbContext.RefreshTokens
-            .Where(rt => rt.UserId == userId && rt.RevokedAt == null)
+            .Where(rt => rt.UserId == userId && rt.RevokedAt == null && rt.ExpiresAt > now)
+            .OrderBy(rt => rt.CreatedAt)
             .ToListAsync();
 
-        foreach (var token in activeTokens)
-            token.RevokedAt = now;
+        var overflow = activeTokens.Count - MaxActiveSessions + 1;
+        if (overflow > 0)
+        {
+            foreach (var oldest in activeTokens.Take(overflow))
+                oldest.RevokedAt = now;
+        }
     }
 
     private static UserDto MapToUserDto(AppUser user) => new(user.Id, user.FullName, user.Email, user.Role.ToString());

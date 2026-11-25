@@ -9,7 +9,6 @@ signed in for days without keeping long-lived credentials exposed.
 ## Decision
 - Short-lived JWT access token (15 minutes), sent as `Authorization: Bearer`.
 - Long-lived refresh token (7 days), stored in the database.
-- Refresh tokens are rotated: every refresh issues a new one and invalidates the old one.
 - Only a hash of the refresh token is stored, never the raw value.
 - Logout revokes the refresh token.
 
