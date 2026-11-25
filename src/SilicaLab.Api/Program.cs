@@ -78,6 +78,7 @@ if (app.Environment.IsDevelopment())
     // Seeding
     var passwordHasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher<AppUser>>();
     await AdminDbSeeder.SeedAsync(dbContext, passwordHasher);
+    await CategoryDbSeeder.SeedAsync(dbContext);
 }
 
 app.UseHttpsRedirection();

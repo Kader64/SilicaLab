@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using SilicaLab.Api.Data.Entities;
 
-namespace SilicaLab.Api.Data.Configuration;
+namespace SilicaLab.Api.Data.Configurations;
 
 public class AppUserConfiguration : IEntityTypeConfiguration<AppUser>
 {

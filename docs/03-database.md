@@ -65,7 +65,6 @@ Unique index: `Email`.
 | CreatedAt | timestamptz | |
 | ExpiresAt | timestamptz | |
 | RevokedAt | timestamptz null | |
-| ReplacedByTokenId | uuid null | rotation chain, used to detect reuse of an old token |
 
 Indexes: `TokenHash` (unique), `UserId`.
 
