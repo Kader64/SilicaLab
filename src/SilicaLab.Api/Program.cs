@@ -10,6 +10,7 @@ using SilicaLab.Api.Common;
 using SilicaLab.Api.Data;
 using SilicaLab.Api.Data.Entities;
 using SilicaLab.Api.Data.Seeders;
+using SilicaLab.Api.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -52,7 +53,10 @@ builder.Services.AddAuthorizationBuilder()
     .SetFallbackPolicy(new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build()); // All endpoint require authorization on default
 
 // Services
+builder.Services.AddProblemDetails(); // For description in built-in error bodies
 builder.Services.AddScoped<IPasswordHasher<AppUser>, PasswordHasher<AppUser>>();
+builder.Services.AddSingleton<ITokenService, TokenService>(); // Provides JWT token for auth
+builder.Services.AddScoped<IAuthService, AuthService>();
 
 
 

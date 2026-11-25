@@ -1,21 +1,24 @@
-# ADR-005: Result Pattern (`Result<T>` and `AppError`) for Domain Error Handling
+# ADR-005: Result Pattern (`ErrorOr`) for Domain Error Handling
 
 Status: Accepted
 
 ## Context
-Expected domain failures (invalid credentials, duplicate enrollment, exhausted attempts, missing resources) are normal business outcomes, not crashes. Throwing exceptions for control flow hides failure modes from method signatures and adds stack-trace overhead.
+
+Expected domain failures (invalid credentials, duplicate enrollment, exhausted attempts, missing resources) are normal business outcomes, not crashes. Throwing exceptions for control flow hides failure modes from method signatures and adds stack-trace overhead, while maintaining a custom `Result<T>` implementation duplicates battle-tested primitives.
 
 ## Decision
-- Return `Result` / `Result<T>` with a typed `AppError` (`ErrorType`: `Validation`, `Unauthorized`, `Forbidden`, `NotFound`, `Conflict`, `BusinessRule`) from all service methods.
-- Provide implicit conversions from `T` and `AppError` to `Result<T>` to avoid boilerplate.
-- Map `AppError` to **RFC 9457 ProblemDetails** (`400`, `401`, `403`, `404`, `409`, `422`) centrally in `ResultExtensions.ToActionResult()`.
-- Reserve exceptions strictly for unexpected system crashes, handled by `app.UseExceptionHandler()` as `500`.
+
+- Use the **`ErrorOr`** NuGet package (`ErrorOr<T>`, `ErrorOr<Success>`, `ErrorOr<Created>`, `ErrorOr<Updated>`, `ErrorOr<Deleted>`) as the return type for all service methods.
+- Represent domain failures using `ErrorOr.Error` factory methods (`Error.Validation`, `Error.Unauthorized`, `Error.Forbidden`, `Error.NotFound`, `Error.Conflict`) or `Error.Custom` for specialized HTTP status codes (e.g., `422 Unprocessable Entity`), leveraging implicit conversions to avoid wrapper boilerplate.
+- Map `List<Error>` / `Error` to **RFC 9457 ProblemDetails** (`400`, `401`, `403`, `404`, `409`, `422`) centrally in a single `ProblemDetailsExtensions.ToProblem()` helper invoked via `.Match(...)` in controllers.
+- Reserve exceptions strictly for unexpected system failures and infrastructure crashes, handled globally by `app.UseExceptionHandler()` as `500 Internal Server Error`.
 
 ## Alternatives considered
-- **Custom domain exceptions + middleware:** Hidden control flow, stack-trace overhead, and exception-based unit tests.
-- **Third-party libraries (`FluentResults`, `ErrorOr`):** External dependency for something solved in ~60 lines tailored to `ProblemDetails`.
+
+- **Custom domain exceptions + middleware:** Hidden control flow, stack-trace overhead on high-frequency failures (e.g., invalid logins), and exception-driven unit tests.
+- **Custom `Result<T>` + `AppError` implementation:** Zero external dependencies, but requires maintaining our own result wrapper, multi-error aggregation, and async chaining helpers (`.ThenAsync`, `.Match`).
 
 ## Consequences
-+ Explicit failure modes in service signatures (`Task<Result<T>>`) and thin 3-line controllers.
-+ Zero exception overhead for domain errors; clean unit tests.
-- Callers must inspect `IsSuccess` / `IsFailure` or forward via `ToActionResult()`.
+
++ Explicit failure modes in service signatures (`Task<ErrorOr<T>>`) and thin, declarative controllers using `.Match(...)`.
+- Zero exception overhead for domain errors; clean, assertion-friendly unit tests.

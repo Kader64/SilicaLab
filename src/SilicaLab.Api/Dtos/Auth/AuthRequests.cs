@@ -1,12 +1,10 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace SilicaLab.Api.Dtos;
-
-public record UserDto(Guid Id, string FullName, string Email, string Role);
+namespace SilicaLab.Api.Dtos.Auth;
 
 public record RegisterRequest(
     [Required(ErrorMessage = "Full name is required.")]
-    [MaxLength(200, ErrorMessage = "Full name must not exceed 200 characters.")]
+    [MaxLength(50, ErrorMessage = "Full name must not exceed 200 characters.")]
     string FullName,
 
     [Required(ErrorMessage = "Email is required.")]
@@ -23,3 +21,14 @@ public record RegisterRequest(
     [RegularExpression("^(Student|Teacher)$", ErrorMessage = "Role must be either Student or Teacher.")]
     string Role
 );
+
+public record LoginRequest(
+    [Required(ErrorMessage = "Email is required.")]
+    [EmailAddress(ErrorMessage = "A valid email address is required.")]
+    string Email,
+
+    [Required(ErrorMessage = "Password is required.")]
+    string Password
+);
+
+public record RefreshRequest(string? RefreshToken = null);
