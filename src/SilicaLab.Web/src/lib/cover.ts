@@ -11,7 +11,7 @@ import {
   Palette,
   type LucideIcon,
 } from "lucide-react";
-import type { CourseCoverData } from "../types";
+import type { CourseCoverData } from "../types/courses";
 
 // Keys are what the API stores in the database. Renaming one needs a data migration.
 export const COVER_GRADIENTS = [
@@ -40,7 +40,6 @@ export const COVER_ICONS: { key: string; label: string; icon: LucideIcon }[] = [
 
 const pick = <T,>(items: readonly T[]): T => items[Math.floor(Math.random() * items.length)];
 
-/** Default cover for a new course. Generated once and then saved, so it never changes on refresh. */
 export function randomCover(): CourseCoverData {
   return {
     coverType: "Gradient",
@@ -50,7 +49,7 @@ export function randomCover(): CourseCoverData {
   };
 }
 
-export function gradientCss(key: string) {
+export function gradientCss(key?: string | null) {
   const g = COVER_GRADIENTS.find((x) => x.key === key) ?? COVER_GRADIENTS[0];
   return `linear-gradient(135deg, ${g.from}, ${g.to})`;
 }

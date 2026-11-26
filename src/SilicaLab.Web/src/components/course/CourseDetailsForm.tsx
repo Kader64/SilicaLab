@@ -1,4 +1,4 @@
-import { COURSE_LEVELS } from "../../lib/constants";
+import { COURSE_LEVELS } from "../../types/courses";
 import { categories } from "../../mocks/data";
 import type { Course } from "../../types";
 import Field from "../ui/Field";

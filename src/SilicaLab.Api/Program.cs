@@ -58,6 +58,7 @@ builder.Services.AddScoped<IPasswordHasher<AppUser>, PasswordHasher<AppUser>>();
 builder.Services.AddSingleton<ITokenService, TokenService>(); // Provides JWT token for auth
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddHostedService<TokenCleanupService>();
+builder.Services.AddScoped<ICourseService, CourseService>();
 
 
 builder.Services.AddControllers();

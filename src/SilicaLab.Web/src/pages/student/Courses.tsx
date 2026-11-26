@@ -1,5 +1,5 @@
-import { Search } from "lucide-react";
-import { useMemo, useState } from "react";
+import { AlertCircle, Search } from "lucide-react";
+import { useState } from "react";
 import CourseCard from "../../components/course/CourseCard";
 import EmptyState from "../../components/ui/EmptyState";
 import FilterSelect from "../../components/ui/FilterSelect";
@@ -7,13 +7,18 @@ import PageHeader from "../../components/ui/PageHeader";
 import Pagination from "../../components/ui/Pagination";
 import SearchInput from "../../components/ui/SearchInput";
 import { cn } from "../../lib/cn";
-import { COURSE_LEVELS } from "../../lib/constants";
-import { categories, courses } from "../../mocks/data";
+import { useCategories, useCourses } from "../../lib/coursesApi";
+import { useDebouncedValue } from "../../hooks/useDebouncedValue";
+import { COURSE_LEVELS } from "../../types/courses";
 
 const PAGE_SIZE = 9;
 const ALL = "all";
 
-const levelOptions = [{ value: ALL, label: "All levels" }, ...COURSE_LEVELS.map((l) => ({ value: l, label: l }))];
+const levelOptions = [
+  { value: ALL, label: "All levels" },
+  ...COURSE_LEVELS.map((l) => ({ value: l, label: l })),
+];
+
 const sortOptions = [
   { value: "newest", label: "Newest" },
   { value: "oldest", label: "Oldest" },
@@ -27,38 +32,40 @@ export default function Courses() {
   const [sort, setSort] = useState("newest");
   const [page, setPage] = useState(1);
 
-  // Changing a filter returns to the first page.
+  const debouncedQuery = useDebouncedValue(query.trim(), 300);
+
+  const { data: categories = [] } = useCategories();
+
+  const {
+    data,
+    isLoading,
+    isError,
+    refetch,
+  } = useCourses({
+    search: debouncedQuery,
+    category,
+    level,
+    sort,
+    page,
+    pageSize: PAGE_SIZE,
+  });
+
   const filter = <T,>(set: (value: T) => void) => (value: T) => {
     set(value);
     setPage(1);
   };
 
-  // TODO API: GET /api/courses?search=&category=&level=&sort=&page=
-  const visible = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    return courses
-      .filter(
-        (c) =>
-          c.status === "Published" &&
-          (category === ALL || c.category === category) &&
-          (level === ALL || c.level === level) &&
-          (!q || [c.title, c.description, c.teacher].some((text) => text.toLowerCase().includes(q))),
-      )
-      .sort((a, b) =>
-        sort === "title" ? a.title.localeCompare(b.title) : sort === "oldest" ? a.createdAt.localeCompare(b.createdAt) : b.createdAt.localeCompare(a.createdAt),
-      );
-  }, [query, category, level, sort]);
-
-  const pageCount = Math.max(1, Math.ceil(visible.length / PAGE_SIZE));
-  const current = Math.min(page, pageCount);
-  const pageItems = visible.slice((current - 1) * PAGE_SIZE, current * PAGE_SIZE);
-
   function clearFilters() {
     setQuery("");
     setCategory(ALL);
     setLevel(ALL);
+    setSort("newest");
     setPage(1);
   }
+
+  const items = data?.items ?? [];
+  const currentPage = data?.page ?? page;
+  const totalPages = data?.totalPages ?? 1;
 
   return (
     <>
@@ -84,7 +91,26 @@ export default function Courses() {
         ))}
       </div>
 
-      {pageItems.length === 0 ? (
+      {isLoading ? (
+        <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3" aria-busy="true" aria-label="Loading courses">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <li key={i} className="card-feature h-80 animate-pulse bg-surface-muted" />
+          ))}
+        </ul>
+      ) : isError ? (
+        <div className="card">
+          <EmptyState
+            icon={AlertCircle}
+            title="Could not load courses"
+            description="Something went wrong while fetching courses."
+            action={
+              <button type="button" className="btn btn-secondary" onClick={() => refetch()}>
+                Try again
+              </button>
+            }
+          />
+        </div>
+      ) : items.length === 0 ? (
         <div className="card">
           <EmptyState
             icon={Search}
@@ -99,7 +125,7 @@ export default function Courses() {
         </div>
       ) : (
         <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {pageItems.map((course) => (
+          {items.map((course) => (
             <li key={course.id}>
               <CourseCard course={course} />
             </li>
@@ -107,7 +133,7 @@ export default function Courses() {
         </ul>
       )}
 
-      <Pagination page={current} pageCount={pageCount} onChange={setPage} />
+      <Pagination page={currentPage} pageCount={totalPages} onChange={setPage} />
     </>
   );
 }

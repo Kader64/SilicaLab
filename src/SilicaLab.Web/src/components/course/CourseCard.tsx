@@ -1,10 +1,10 @@
 import { BarChart3, BookOpen } from "lucide-react";
 import { Link } from "react-router-dom";
 import { pluralize } from "../../lib/format";
-import type { Course } from "../../types";
+import type { CourseSummaryDto } from "../../types/courses";
 import CourseCover from "./CourseCover";
 
-export default function CourseCard({ course }: { course: Course }) {
+export default function CourseCard({ course }: { course: CourseSummaryDto }) {
   return (
     <Link
       to={`/courses/${course.id}`}

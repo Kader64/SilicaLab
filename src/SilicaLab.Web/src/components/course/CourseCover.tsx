@@ -1,21 +1,14 @@
 import { useState, type ReactNode } from "react";
 import { COVER_ICONS, gradientCss } from "../../lib/cover";
 import { cn } from "../../lib/cn";
-import type { CourseCoverData } from "../../types";
+import type { CourseCoverData } from "../../types/courses";
 
 interface Props {
   cover: CourseCoverData;
-  /** Size comes from the parent. */
   className?: string;
-  /** Overlays such as the category badge. */
   children?: ReactNode;
 }
 
-/**
- * Cover used by CourseCard, MyLearning, ExamIntro and the preview in CourseEditor.
- * The icon hover effect works when a parent has the `group` class.
- * The gradient is also the fallback when an image can't be loaded.
- */
 export default function CourseCover({ cover, className = "h-40", children }: Props) {
   const [failedUrl, setFailedUrl] = useState<string | null>(null);
   const imageUrl = cover.coverType === "Image" ? cover.thumbnailUrl?.trim() : undefined;
