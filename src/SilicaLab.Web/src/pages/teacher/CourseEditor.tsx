@@ -10,7 +10,7 @@ import PublishPanel, {
 import PageHeader from "../../components/ui/PageHeader";
 import { randomCover } from "../../lib/cover";
 import { examQuestions, getCourse, lessons } from "../../mocks/data";
-import type { CourseCoverData } from "../../types";
+import type { CourseCoverData } from "../../types/courses";
 
 const FORM_ID = "course-form";
 

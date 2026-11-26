@@ -10,29 +10,28 @@
   --color-accent-soft: #e6f3f4;
 
   /* Text */
-  --color-ink: #0f172a; /* headings, strong text */
-  --color-body: #334155; /* normal text */
-  --color-muted: #64748b; /* secondary text, placeholders (4.7:1 on white) */
-  --color-faint: #94a3b8; /* decorative icons and disabled text only. Too light for readable text */
+  --color-ink: #0f172a;
+  --color-body: #334155;
+  --color-muted: #64748b; /* 4.7:1 contrast on white */
+  --color-faint: #94a3b8; /* decorative icons and disabled text only */
 
   /* Surfaces and lines */
-  --color-page: #f8fafc; /* page background, hover background */
-  --color-line: #e2e8f0; /* dividers, card borders */
-  --color-line-strong: #cbd5e1; /* input and button borders */
+  --color-page: #f8fafc;
+  --color-line: #e2e8f0;
+  --color-line-strong: #cbd5e1;
 
   /* Status */
   --color-success: #047857;
   --color-success-soft: #ecfdf5;
   --color-warning: #b45309;
   --color-warning-soft: #fffbeb;
-  --color-danger: #dc2626; /* backgrounds, icons, text on white */
-  --color-danger-dark: #b91c1c; /* text on danger-soft (the lighter red fails 4.5:1 there) */
+  --color-danger: #dc2626;
+  --color-danger-dark: #b91c1c; /* 4.5:1+ contrast on danger-soft */
   --color-danger-soft: #fef2f2;
 }
 
 @layer base {
   :root {
-    /* Height of the sticky app header. */
     --header-h: 4rem;
   }
 
@@ -45,7 +44,6 @@
     outline-offset: 2px;
   }
 
-  /* Elements focused from code (e.g. the lesson heading) should not show a ring. */
   [tabindex="-1"]:focus {
     outline: none;
   }
@@ -63,7 +61,6 @@
 }
 
 @layer components {
-  /* Typography */
   .page-title {
     @apply text-2xl font-extrabold tracking-tight text-ink sm:text-3xl;
   }
@@ -80,12 +77,10 @@
     @apply font-semibold text-accent underline-offset-4 hover:text-accent-dark hover:underline;
   }
 
-  /* Hidden until focused. First element in a layout, targets <main id="main">. */
   .skip-link {
     @apply sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-white focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-ink focus:shadow-lg;
   }
 
-  /* Buttons. Combine with one variant, e.g. "btn btn-primary". Works on <button> and <Link>. */
   .btn {
     @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50;
   }
@@ -98,7 +93,6 @@
     @apply border border-line-strong bg-white text-body not-disabled:hover:bg-page;
   }
 
-  /* Borderless button for table rows and toolbars */
   .btn-ghost {
     @apply text-body not-disabled:hover:bg-line/60;
   }
@@ -107,7 +101,6 @@
     @apply bg-danger text-white not-disabled:hover:bg-danger-dark;
   }
 
-  /* Row actions: suspend, revoke, disable (danger) and restore, enable (success) */
   .btn-outline-danger {
     @apply border border-line-strong bg-white text-danger not-disabled:hover:border-danger/40 not-disabled:hover:bg-danger-soft;
   }
@@ -124,7 +117,6 @@
     @apply px-7 py-3 text-base;
   }
 
-  /* Icon-only button (reorder, edit, delete). Always give it an aria-label. */
   .icon-btn {
     @apply inline-flex items-center justify-center rounded-md p-2 text-muted transition-colors not-disabled:hover:bg-page not-disabled:hover:text-ink disabled:cursor-not-allowed disabled:opacity-40;
   }
@@ -133,7 +125,6 @@
     @apply text-danger not-disabled:hover:bg-danger-soft not-disabled:hover:text-danger;
   }
 
-  /* Forms. The invalid state is driven by aria-invalid="true" on the control. */
   .label {
     @apply mb-1.5 block text-sm font-semibold text-ink;
   }
@@ -150,7 +141,6 @@
     @apply mt-1.5 text-sm font-medium text-danger-dark;
   }
 
-  /* Containers. Dense UI (admin, tables, panels) uses .card; showcase blocks use .card-feature. */
   .card {
     @apply rounded-lg border border-line bg-white;
   }
@@ -159,12 +149,10 @@
     @apply rounded-2xl border border-line bg-white shadow-sm;
   }
 
-  /* Add to a clickable .card-feature. Inner hover effects need the `group` class. */
   .card-interactive {
     @apply transition motion-safe:hover:-translate-y-0.5 hover:shadow-md;
   }
 
-  /* Messages. Combine with one variant, e.g. "alert alert-danger". */
   .alert {
     @apply rounded-lg border px-4 py-3 text-sm;
   }
@@ -181,7 +169,6 @@
     @apply border-success/20 bg-success-soft text-success;
   }
 
-  /* Status pills. Combine with one variant, e.g. "badge badge-success". */
   .badge {
     @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold;
   }
@@ -202,7 +189,6 @@
     @apply bg-danger-soft text-danger-dark;
   }
 
-  /* Filter chips. Add .chip-active to the selected one. */
   .chip {
     @apply rounded-full bg-white px-4 py-1.5 text-sm font-semibold text-muted ring-1 ring-line transition-colors hover:bg-accent-soft hover:text-accent-dark;
   }
@@ -211,7 +197,6 @@
     @apply bg-accent text-white ring-accent hover:bg-accent-dark hover:text-white;
   }
 
-  /* Tables are rendered by components/ui/DataTable */
   .table-head {
     @apply border-b border-line bg-page;
   }
@@ -232,12 +217,10 @@
     @apply px-5 py-4 text-[16px];
   }
 
-  /* Search and filters above a table or list */
   .toolbar {
     @apply mb-5 flex flex-col gap-3 sm:flex-row;
   }
 
-  /* Progress bar: <div class="progress"><div class="progress-bar" style={{ width }} /></div> */
   .progress {
     @apply h-1.5 flex-1 overflow-hidden rounded-full bg-line;
   }

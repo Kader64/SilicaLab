@@ -1,5 +1,4 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type { AuthResponse, LoginRequest, RegisterRequest, UserDto } from "../types/auth";
 import {
   createContext,
   useCallback,
@@ -8,13 +7,18 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { authApi } from "../api/auth.api";
 import {
-  authApi,
   refreshAccessToken,
   setAccessToken,
   setOnUnauthorized,
-} from "../lib/api";
-
+} from "../api/client";
+import type {
+  AuthResponse,
+  LoginRequest,
+  RegisterRequest,
+  UserDto,
+} from "../types/auth";
 
 interface AuthContextValue {
   user: UserDto | null;
@@ -43,7 +47,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => setOnUnauthorized(null);
   }, [clearSession]);
 
-  // Odtworzenie sesji po F5 przy pomocy 7-dniowego cookie refresh token
+  // Restore the session on page refresh using the 7-day refresh token cookie
   useEffect(() => {
     let isMounted = true;
 

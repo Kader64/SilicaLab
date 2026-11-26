@@ -1,11 +1,10 @@
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import type {
   CategoryDto,
   CourseQueryParams,
   CourseSummaryDto,
   PagedResponse,
 } from "../types/courses";
-import { api } from "./api";
+import { api } from "./client";
 
 export const coursesApi = {
   getCategories: () =>
@@ -29,19 +28,3 @@ export const coursesApi = {
       })
       .then((r) => r.data),
 };
-
-export function useCategories() {
-  return useQuery({
-    queryKey: ["courses", "categories"],
-    queryFn: coursesApi.getCategories,
-    staleTime: 10 * 60 * 1000,
-  });
-}
-
-export function useCourses(params: CourseQueryParams) {
-  return useQuery({
-    queryKey: ["courses", "list", params],
-    queryFn: () => coursesApi.getCourses(params),
-    placeholderData: keepPreviousData,
-  });
-}

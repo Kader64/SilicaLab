@@ -14,9 +14,9 @@ import {
   RequireAuth,
 } from "./components/auth/RouteGuards";
 import { AuthProvider } from "./context/AuthContext";
-import AdminLayout from "./layout/AdminLayout";
-import AppLayout from "./layout/AppLayout";
-import AuthLayout from "./layout/AuthLayout";
+import AdminLayout from "./layouts/AdminLayout";
+import AppLayout from "./layouts/AppLayout";
+import AuthLayout from "./layouts/AuthLayout";
 import { queryClient } from "./lib/queryClient";
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";

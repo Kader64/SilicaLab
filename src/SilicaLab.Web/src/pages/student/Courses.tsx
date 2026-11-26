@@ -7,7 +7,7 @@ import PageHeader from "../../components/ui/PageHeader";
 import Pagination from "../../components/ui/Pagination";
 import SearchInput from "../../components/ui/SearchInput";
 import { cn } from "../../lib/cn";
-import { useCategories, useCourses } from "../../lib/coursesApi";
+import { useCategories, useCourses } from "../../queries/courses.query";
 import { useDebouncedValue } from "../../hooks/useDebouncedValue";
 import { COURSE_LEVELS } from "../../types/courses";
 

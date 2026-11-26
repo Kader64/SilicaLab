@@ -4,7 +4,7 @@ import { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Field from "../../components/ui/Field";
 import { useAuth } from "../../context/AuthContext";
-import { getApiErrorMessage } from "../../lib/api";
+import { getApiErrorMessage } from "../../api/client";
 
 const roles = [
   {

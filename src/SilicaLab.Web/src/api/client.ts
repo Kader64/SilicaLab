@@ -1,9 +1,5 @@
 import axios, { isAxiosError, type AxiosError } from "axios";
-import type {
-  AuthResponse,
-  LoginRequest,
-  RegisterRequest,
-} from "../types/auth";
+import type { AuthResponse } from "../types/auth";
 
 declare module "axios" {
   export interface AxiosRequestConfig {
@@ -88,18 +84,6 @@ export function refreshAccessToken(): Promise<AuthResponse> {
   return refreshPromise;
 }
 
-export const authApi = {
-  login: (data: LoginRequest) =>
-    api.post<AuthResponse>("/auth/login", data).then((r) => r.data),
-
-  register: (data: RegisterRequest) =>
-    api.post<AuthResponse>("/auth/register", data).then((r) => r.data),
-
-  logout: () =>
-    api.post("/auth/logout", {}, { skipAuthRefresh: true }),
-};
-
-// 1. Attach Bearer token to outgoing requests
 api.interceptors.request.use((config) => {
   if (accessToken && !config.skipAuthRefresh) {
     config.headers.Authorization = `Bearer ${accessToken}`;
@@ -107,7 +91,6 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// 2. Intercept 401s and retry once after refreshing the token
 api.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {

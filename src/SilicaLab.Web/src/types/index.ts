@@ -1,27 +1,30 @@
-export type CoverType = "Gradient" | "Image";
+import type { CourseLevel, CourseStatus, CoverType } from "./courses";
 
 export interface CourseCoverData {
   coverType: CoverType;
   coverGradient: string;
   coverIcon: string;
-  thumbnailUrl?: string | null;
+  thumbnailUrl: string;
 }
-
-export type CourseStatus = "Draft" | "Published" | "Unpublished" | "Suspended";
-export type CourseLevel = "Beginner" | "Intermediate" | "Advanced";
 
 export interface Course extends CourseCoverData {
   id: string;
   title: string;
   description: string;
   category: string;
-  level: CourseLevel;
   teacher: string;
+  teacherId: string;
+  level: CourseLevel;
+  status: CourseStatus;
   lessons: number;
   students: number;
-  status: CourseStatus;
-  suspensionReason?: string;
   createdAt: string;
+  suspensionReason?: string;
+}
+
+export interface Category {
+  id: string;
+  name: string;
 }
 
 export interface Lesson {

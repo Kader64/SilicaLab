@@ -1,7 +1,6 @@
 import { BarChart3, BookOpen, ClipboardCheck, Clock, User } from "lucide-react";
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import CourseCover from "../../components/course/CourseCover";
 import CourseNotFound from "../../components/course/CourseNotFound";
 import Breadcrumbs from "../../components/ui/Breadcrumbs";
 import DescriptionList from "../../components/ui/DescriptionList";

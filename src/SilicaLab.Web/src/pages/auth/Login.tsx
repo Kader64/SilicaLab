@@ -3,7 +3,7 @@ import { useState, type FormEvent } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import Field from "../../components/ui/Field";
 import { useAuth } from "../../context/AuthContext";
-import { getApiErrorMessage } from "../../lib/api";
+import { getApiErrorMessage } from "../../api/client";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
