@@ -22,9 +22,14 @@ const roles = [
 ] as const;
 
 const MIN_PASSWORD_LENGTH = 8;
+const MAX_PASSWORD_LENGTH = 128;
+const MAX_NAME_LENGTH = 100;
+const MAX_EMAIL_LENGTH = 256;
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 type Errors = {
   fullName?: string;
+  email?: string;
   password?: string;
   confirm?: string;
   form?: string;
@@ -39,19 +44,33 @@ export default function Register() {
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const data = new FormData(e.currentTarget);
-    const fullName = String(data.get("name")).trim();
-    const email = String(data.get("email")).trim();
-    const password = String(data.get("password"));
+    const fullName = String(data.get("name") ?? "").trim();
+    const email = String(data.get("email") ?? "").trim();
+    const password = String(data.get("password") ?? "");
+    const confirm = String(data.get("confirm") ?? "");
     const role = String(data.get("role")) as "Student" | "Teacher";
+
     const next: Errors = {};
 
     if (!fullName) {
       next.fullName = "Full name is required.";
+    } else if (fullName.length > MAX_NAME_LENGTH) {
+      next.fullName = `Full name must not exceed ${MAX_NAME_LENGTH} characters.`;
     }
+
+    if (!email) {
+      next.email = "Email is required.";
+    } else if (email.length > MAX_EMAIL_LENGTH || !EMAIL_REGEX.test(email)) {
+      next.email = "Enter a valid email address.";
+    }
+
     if (password.length < MIN_PASSWORD_LENGTH) {
       next.password = `Use at least ${MIN_PASSWORD_LENGTH} characters.`;
+    } else if (password.length > MAX_PASSWORD_LENGTH) {
+      next.password = `Password must not exceed ${MAX_PASSWORD_LENGTH} characters.`;
     }
-    if (password !== data.get("confirm")) {
+
+    if (password !== confirm) {
       next.confirm = "Passwords do not match.";
     }
 
@@ -60,13 +79,11 @@ export default function Register() {
 
     setIsSubmitting(true);
     try {
-      const user = await register({ fullName, email, password, role });
-      navigate(user.role === "Teacher" ? "/teach/courses" : "/courses", {
-        replace: true,
-      });
+      await register({ fullName, email, password, role });
+      navigate("/courses", { replace: true });
     } catch (err) {
       if (isAxiosError(err) && err.response?.status === 409) {
-        setErrors({ form: "This email is already registered." });
+        setErrors({ email: "An account with this email already exists." });
       } else {
         setErrors({ form: getApiErrorMessage(err) });
       }
@@ -91,12 +108,12 @@ export default function Register() {
               className="input"
               placeholder="Anna Kowalska"
               autoComplete="name"
-              maxLength={50}
+              maxLength={MAX_NAME_LENGTH}
               required
             />
           )}
         </Field>
-        <Field label="Email">
+        <Field label="Email" error={errors.email}>
           {(control) => (
             <input
               {...control}
@@ -105,6 +122,7 @@ export default function Register() {
               className="input"
               placeholder="you@example.com"
               autoComplete="email"
+              maxLength={MAX_EMAIL_LENGTH}
               required
             />
           )}
@@ -119,6 +137,7 @@ export default function Register() {
                 className="input"
                 placeholder="••••••••"
                 autoComplete="new-password"
+                maxLength={MAX_PASSWORD_LENGTH}
                 required
               />
             )}
@@ -132,6 +151,7 @@ export default function Register() {
                 className="input"
                 placeholder="••••••••"
                 autoComplete="new-password"
+                maxLength={MAX_PASSWORD_LENGTH}
                 required
               />
             )}
@@ -153,7 +173,11 @@ export default function Register() {
                   defaultChecked={role.value === "Student"}
                   className="sr-only"
                 />
-                <role.icon size={20} aria-hidden="true" className="text-accent" />
+                <role.icon
+                  size={20}
+                  aria-hidden="true"
+                  className="text-accent"
+                />
                 <span className="font-bold text-ink">{role.title}</span>
                 <span className="text-xs text-muted">{role.text}</span>
               </label>

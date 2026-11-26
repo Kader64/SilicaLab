@@ -28,10 +28,10 @@ public class AppUserConfiguration : IEntityTypeConfiguration<AppUser>
             .IsRequired()
             .HasColumnType("text");
 
-        // FullName: varchar(50), required
+        // FullName: varchar(100), required
         builder.Property(u => u.FullName)
             .IsRequired()
-            .HasMaxLength(50);
+            .HasMaxLength(100);
 
         // Role: varchar(20), stored as string, default 'Student'
         builder.Property(u => u.Role)

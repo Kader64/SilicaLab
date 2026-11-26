@@ -4,7 +4,7 @@ namespace SilicaLab.Api.Dtos.Auth;
 
 public record RegisterRequest(
     [Required(ErrorMessage = "Full name is required.")]
-    [MaxLength(50, ErrorMessage = "Full name must not exceed 200 characters.")]
+    [MaxLength(100, ErrorMessage = "Full name must not exceed 100 characters.")]
     string FullName,
 
     [Required(ErrorMessage = "Email is required.")]

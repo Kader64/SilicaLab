@@ -36,6 +36,30 @@ export const api = axios.create({
   withCredentials: true,
 });
 
+interface AspNetProblemDetails {
+  detail?: string;
+  title?: string;
+  message?: string;
+  errors?: Record<string, string[]>;
+}
+
+export function getApiErrorMessage(
+  error: unknown,
+  fallback = "Something went wrong. Try again.",
+) {
+  if (isAxiosError<AspNetProblemDetails>(error)) {
+    const data = error.response?.data;
+
+    if (data?.errors) {
+      const firstFieldErrors = Object.values(data.errors)[0];
+      if (firstFieldErrors?.[0]) return firstFieldErrors[0];
+    }
+
+    return data?.detail ?? data?.title ?? data?.message ?? fallback;
+  }
+  return fallback;
+}
+
 export function refreshAccessToken(): Promise<AuthResponse> {
   if (!refreshPromise) {
     refreshPromise = api
@@ -106,20 +130,3 @@ api.interceptors.response.use(
     return Promise.reject(error);
   },
 );
-
-export function getApiErrorMessage(
-  error: unknown,
-  fallback = "Something went wrong. Try again.",
-) {
-  if (
-    isAxiosError<{ detail?: string; title?: string; message?: string }>(error)
-  ) {
-    return (
-      error.response?.data?.detail ??
-      error.response?.data?.title ??
-      error.response?.data?.message ??
-      fallback
-    );
-  }
-  return fallback;
-}
