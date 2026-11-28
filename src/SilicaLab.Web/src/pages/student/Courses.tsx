@@ -111,7 +111,7 @@ export default function Courses() {
           />
         </div>
       ) : items.length === 0 ? (
-        <div className="card">
+        <div>
           <EmptyState
             icon={Search}
             title="No courses found"

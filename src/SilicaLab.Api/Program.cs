@@ -58,8 +58,10 @@ builder.Services.AddScoped<IPasswordHasher<AppUser>, PasswordHasher<AppUser>>();
 builder.Services.AddSingleton<ITokenService, TokenService>(); // Provides JWT token for auth
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddHostedService<TokenCleanupService>();
+
 builder.Services.AddScoped<ICourseService, CourseService>();
 builder.Services.AddScoped<ILessonService, LessonService>();
+builder.Services.AddScoped<IEnrollmentService, EnrollmentService>();
 
 
 builder.Services.AddControllers();
@@ -81,6 +83,8 @@ if (app.Environment.IsDevelopment())
     var passwordHasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher<AppUser>>();
     await AdminDbSeeder.SeedAsync(dbContext, passwordHasher);
     await CategoryDbSeeder.SeedAsync(dbContext);
+    // TEMP Seeder for testing ONLY
+    await FullDbSeeder.SeedAsync(dbContext, passwordHasher);
 }
 
 app.UseHttpsRedirection();
