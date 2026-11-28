@@ -121,7 +121,7 @@ public class LessonsController(ILessonService lessonService) : ControllerBase
 
     private Guid GetCurrentUserId()
     {
-        var sub = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+        var sub = User.FindFirstValue("sub");
         return Guid.Parse(sub!);
     }
 }

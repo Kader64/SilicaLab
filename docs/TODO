@@ -1,1 +1,4 @@
 1. Add for production BackgroundService to purge RefreshTokens where ExpiresAt < UtcNow - 1 day.
+
+
+2. Create common shared ClaimsPrincipalExtensions for GetCurrentUser from JWT to use in controllers instead of adding method GetCureentuser

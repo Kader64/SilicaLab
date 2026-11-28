@@ -62,7 +62,9 @@ builder.Services.AddHostedService<TokenCleanupService>();
 builder.Services.AddScoped<ICourseService, CourseService>();
 builder.Services.AddScoped<ILessonService, LessonService>();
 builder.Services.AddScoped<IEnrollmentService, EnrollmentService>();
-
+builder.Services.AddScoped<IExamGradingService, ExamGradingService>();
+builder.Services.AddScoped<IStudentExamService, StudentExamService>();
+builder.Services.AddScoped<ICertificateService, CertificateService>();
 
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
@@ -83,6 +85,7 @@ if (app.Environment.IsDevelopment())
     var passwordHasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher<AppUser>>();
     await AdminDbSeeder.SeedAsync(dbContext, passwordHasher);
     await CategoryDbSeeder.SeedAsync(dbContext);
+    
     // TEMP Seeder for testing ONLY
     await FullDbSeeder.SeedAsync(dbContext, passwordHasher);
 }
