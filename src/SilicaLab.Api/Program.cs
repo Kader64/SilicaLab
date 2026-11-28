@@ -74,7 +74,7 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi().AllowAnonymous();
-    app.MapScalarApiReference().AllowAnonymous();
+    app.MapScalarApiReference(options => options.AddPreferredSecuritySchemes("Bearer")).AllowAnonymous();
 
     // Auto migrate DB on development
     await using var scope = app.Services.CreateAsyncScope();
@@ -85,7 +85,7 @@ if (app.Environment.IsDevelopment())
     var passwordHasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher<AppUser>>();
     await AdminDbSeeder.SeedAsync(dbContext, passwordHasher);
     await CategoryDbSeeder.SeedAsync(dbContext);
-    
+
     // TEMP Seeder for testing ONLY
     await FullDbSeeder.SeedAsync(dbContext, passwordHasher);
 }
