@@ -59,6 +59,7 @@ builder.Services.AddSingleton<ITokenService, TokenService>(); // Provides JWT to
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddHostedService<TokenCleanupService>();
 builder.Services.AddScoped<ICourseService, CourseService>();
+builder.Services.AddScoped<ILessonService, LessonService>();
 
 
 builder.Services.AddControllers();

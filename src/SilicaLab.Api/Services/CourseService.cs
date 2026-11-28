@@ -2,7 +2,7 @@ using ErrorOr;
 using Microsoft.EntityFrameworkCore;
 using SilicaLab.Api.Data;
 using SilicaLab.Api.Data.Entities;
-using SilicaLab.Api.Dtos.Courses;
+using SilicaLab.Api.Dtos;
 
 namespace SilicaLab.Api.Services;
 
@@ -10,6 +10,7 @@ public interface ICourseService
 {
     Task<ErrorOr<List<CategoryDto>>> GetCategoriesAsync();
     Task<ErrorOr<PagedResponse<CourseSummaryDto>>> GetPublishedCoursesAsync(CourseQueryParams query);
+    Task<ErrorOr<CourseDetailDto>> GetCourseByIdAsync(Guid courseId, Guid? currentUserId, bool isAdmin);
 }
 
 public class CourseService(AppDbContext dbContext) : ICourseService
@@ -94,4 +95,127 @@ public class CourseService(AppDbContext dbContext) : ICourseService
     }
     private static string EscapeLikePattern(string input) =>
         input.Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_");
+
+    public async Task<ErrorOr<CourseDetailDto>> GetCourseByIdAsync(
+            Guid courseId,
+            Guid? currentUserId,
+            bool isAdmin)
+    {
+        var course = await dbContext.Courses
+            .AsNoTracking()
+            .Where(c => c.Id == courseId)
+            .Select(c => new
+            {
+                c.Id,
+                c.Title,
+                c.Description,
+                c.CategoryId,
+                Category = c.Category.Name,
+                c.TeacherId,
+                Teacher = c.Teacher.FullName,
+                c.Level,
+                c.Status,
+                c.SuspensionReason,
+                c.CoverType,
+                c.CoverGradient,
+                c.CoverIcon,
+                c.ThumbnailUrl,
+                c.CreatedAt,
+                c.UpdatedAt,
+                c.PublishedAt,
+                EnrolledStudentsCount = dbContext.Enrollments.Count(e => e.CourseId == c.Id),
+                Lessons = c.Lessons
+                    .OrderBy(l => l.Order)
+                    .Select(l => new LessonOverviewDto(
+                        l.Id,
+                        l.Title,
+                        l.Order,
+                        !string.IsNullOrEmpty(l.VideoUrl)
+                    ))
+                    .ToList(),
+                Exam = c.Exam == null
+                    ? null
+                    : new ExamOverviewDto(
+                        c.Exam.Id,
+                        c.Exam.PassMarkPercent,
+                        c.Exam.TimeLimitMinutes,
+                        c.Exam.MaxAttempts,
+                        c.Exam.Questions.Count(q => !q.IsArchived)
+                    )
+            })
+            .FirstOrDefaultAsync();
+
+        if (course is null)
+            return Error.NotFound("Course.NotFound", "Course was not found.");
+
+        var isOwner = currentUserId.HasValue && course.TeacherId == currentUserId.Value;
+        if (course.Status != CourseStatus.Published && !isOwner && !isAdmin)
+            return Error.NotFound("Course.NotFound", "Course was not found.");
+
+        StudentCourseProgressDto? studentProgress = null;
+
+        if (currentUserId.HasValue && !isOwner)
+        {
+            var enrollment = await dbContext.Enrollments
+                .AsNoTracking()
+                .Where(e => e.CourseId == courseId && e.StudentId == currentUserId.Value)
+                .Select(e => new
+                {
+                    e.Id,
+                    e.EnrolledAt,
+                    CompletedCount = e.LessonProgress.Count,
+                    HasPassedExam = e.ExamAttempts.Any(a => a.Passed == true),
+                    CertificateCode = dbContext.Certificates
+                        .Where(cert =>
+                            cert.StudentId == currentUserId.Value &&
+                            cert.CourseId == courseId &&
+                            cert.RevokedAt == null)
+                        .Select(cert => cert.Code)
+                        .FirstOrDefault()
+                })
+                .FirstOrDefaultAsync();
+
+            if (enrollment is not null)
+            {
+                var totalLessons = course.Lessons.Count;
+                var isExamUnlocked = totalLessons > 0 && enrollment.CompletedCount >= totalLessons;
+
+                studentProgress = new StudentCourseProgressDto(
+                    enrollment.Id,
+                    enrollment.EnrolledAt,
+                    enrollment.CompletedCount,
+                    isExamUnlocked,
+                    enrollment.HasPassedExam,
+                    enrollment.CertificateCode
+                );
+            }
+        }
+
+        // Only expose SuspensionReason to the owning Teacher or Admin
+        var visibleSuspensionReason = (isOwner || isAdmin) ? course.SuspensionReason : null;
+
+        return new CourseDetailDto(
+            course.Id,
+            course.Title,
+            course.Description,
+            course.CategoryId,
+            course.Category,
+            course.TeacherId,
+            course.Teacher,
+            course.Level.ToString(),
+            course.Status.ToString(),
+            visibleSuspensionReason,
+            course.CoverType.ToString(),
+            course.CoverGradient,
+            course.CoverIcon,
+            course.ThumbnailUrl,
+            course.CreatedAt,
+            course.UpdatedAt,
+            course.PublishedAt,
+            course.EnrolledStudentsCount,
+            course.Lessons,
+            course.Exam,
+            studentProgress
+        );
+    }
 }

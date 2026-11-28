@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
-using SilicaLab.Api.Dtos.Courses;
 using SilicaLab.Api.Extensions;
 using SilicaLab.Api.Services;
+using SilicaLab.Api.Dtos;
+using System.Security.Claims;
+using SilicaLab.Api.Common;
 
 namespace SilicaLab.Api.Controllers;
 
@@ -27,5 +29,24 @@ public class CoursesController(ICourseService courseService) : ControllerBase
         return result.Match(
             categories => Results.Ok(categories),
             errors => errors.ToProblem());
+    }
+
+    [HttpGet("{id:guid}")]
+    public async Task<IResult> GetCourseById(Guid id)
+    {
+        var result = await courseService.GetCourseByIdAsync(
+            id,
+            GetCurrentUserId(),
+            User.IsInRole(Roles.Admin));
+
+        return result.Match(
+            course => Results.Ok(course),
+            errors => errors.ToProblem());
+    }
+
+    private Guid GetCurrentUserId()
+    {
+        var sub = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+        return Guid.Parse(sub!);
     }
 }
